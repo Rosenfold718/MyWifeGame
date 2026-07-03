@@ -18,6 +18,8 @@ import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 
 // Shared camera yaw ref — CameraController writes, InputHandler reads
 const _cameraYaw = { value: 0 };
+// Track if right-click was a drag (to prevent magic cast on drag release)
+const _rightDragMoved = { value: false };
 
 // ============================================
 // CAMERA CONTROLLER
@@ -32,6 +34,9 @@ function CameraController() {
   const currentPos = useRef(new THREE.Vector3(0, 5, 8));
   const currentLookAt = useRef(new THREE.Vector3());
   const isPointerLocked = useRef(false);
+  const isRightDragging = useRef(false);
+    const rightDragStart = useRef({ x: 0, y: 0 });
+    const rightDragMoved = useRef(false);
   const velocity = useRef(new THREE.Vector3());
   const playerPosition = useGameStore((s) => s.playerPosition);
   const isDodging = useGameStore((s) => s.isDodging);
@@ -41,17 +46,49 @@ function CameraController() {
     const canvas = gl.domElement;
 
     const onClick = () => {
-      if (!isPointerLocked.current) canvas.requestPointerLock();
+      if (!isPointerLocked.current) {
+        try { canvas.requestPointerLock(); } catch(_) {}
+      }
     };
     const onPointerLockChange = () => {
       isPointerLocked.current = document.pointerLockElement === canvas;
     };
     const onMouseMove = (e: MouseEvent) => {
-      if (!isPointerLocked.current) return;
-      const sens = 0.003;
-      yaw.current -= e.movementX * sens;
-      pitch.current = Math.max(-1.0, Math.min(0.6, pitch.current - e.movementY * sens));
-      _cameraYaw.value = yaw.current;
+      // Pointer lock mode
+      if (isPointerLocked.current) {
+        const sens = 0.003;
+        yaw.current -= e.movementX * sens;
+        pitch.current = Math.max(-1.0, Math.min(0.6, pitch.current - e.movementY * sens));
+        _cameraYaw.value = yaw.current;
+        return;
+      }
+      // Right-click drag fallback (works without pointer lock)
+      if (isRightDragging.current) {
+        const dx = e.clientX - rightDragStart.current.x;
+        const dy = e.clientY - rightDragStart.current.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          rightDragMoved.current = true;
+          _rightDragMoved.value = true;
+        }
+        const sens = 0.005;
+        yaw.current -= e.movementX * sens;
+        pitch.current = Math.max(-1.0, Math.min(0.6, pitch.current - e.movementY * sens));
+        _cameraYaw.value = yaw.current;
+      }
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) {
+        isRightDragging.current = true;
+        rightDragMoved.current = false;
+        rightDragStart.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button === 2) {
+        isRightDragging.current = false;
+        // Reset after a tick so Canvas onPointerDown can check
+        setTimeout(() => { _rightDragMoved.value = false; }, 50);
+      }
     };
     const onWheel = (e: WheelEvent) => {
       targetDistance.current = Math.max(2.5, Math.min(15, targetDistance.current + e.deltaY * 0.008));
@@ -60,12 +97,16 @@ function CameraController() {
     canvas.addEventListener('click', onClick);
     document.addEventListener('pointerlockchange', onPointerLockChange);
     document.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('wheel', onWheel);
 
     return () => {
       canvas.removeEventListener('click', onClick);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       document.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
       canvas.removeEventListener('wheel', onWheel);
     };
   }, [gl]);
@@ -488,7 +529,7 @@ export function GameWorld() {
         if (e.button === 0) {
           useGameStore.getState().meleeAttack();
         }
-        if (e.button === 2) {
+        if (e.button === 2 && !_rightDragMoved.value) {
           e.preventDefault();
           const rot = useGameStore.getState().playerRotation;
           useGameStore.getState().magicAttack([

@@ -118,3 +118,33 @@ Stage Summary:
 - World objects properly distributed in smaller 100x100 world with correct biome ranges
 - Trees shorter and more proportional (~40% height reduction)
 - Object counts tuned for performance with biome-filtered placement
+---
+Task ID: 2-fixes
+Agent: Main
+Task: Fix movement, jitter, falling, camera, world size, canvas sizing, mouse control
+
+Work Log:
+- Fixed hydration crash: changed lazy() to dynamic({ssr:false}) in page.tsx
+- Fixed useFrame outside Canvas: moved physics loop into PhysicsLoop component inside Canvas
+- Fixed GRAVITY not imported in gameStore.ts
+- Separated camera yaw from player rotation via shared _cameraYaw ref
+- Fixed movement direction: camera-relative WASD with correct forward=away-from-camera
+- Fixed character facing: model now faces movement direction correctly (atan2 convention)
+- Fixed attack/magic direction to match new rotation system
+- Fixed object jitter: all Math.random() in EnvironmentObjects wrapped in useMemo
+- Reduced world from 300x300 to 100x100, adapted NPC positions and object spawn ranges
+- Reduced terrain height from 30 to 12 scale, smoother noise parameters
+- Increased ground offset from 0.1 to 0.3 to prevent falling through
+- Fixed Canvas not filling screen: added width/height to ScreenShake wrapper and Canvas style
+- Added right-click drag camera control as fallback for environments without pointer lock
+- Added drag-vs-click detection to prevent magic cast during camera rotation
+- Changed shadows to PCFShadowMap to remove deprecation warnings
+- Reduced tree/object heights by ~40% for better proportions
+
+Stage Summary:
+- Game loads and renders correctly: character visible, 3D world fills screen, no black areas
+- Movement is camera-relative: W = forward (away from camera), S = backward
+- Camera controllable via left-click (pointer lock) or right-click drag (fallback)
+- No object jitter from re-renders
+- Smaller, more manageable world with smoother terrain
+- Player no longer falls through ground
