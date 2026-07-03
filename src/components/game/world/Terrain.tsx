@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { getTerrainHeight, getGroundColor } from '@/lib/game/noise';
 import { WORLD_SIZE, TERRAIN_SEGMENTS } from '@/lib/game/constants';
+import { sharedGradientMap } from '@/lib/game/toonMaterial';
 
 export function Terrain() {
   const meshRef = useRef<THREE.Mesh>(null);
@@ -40,15 +41,9 @@ export function Terrain() {
     geo.computeVertexNormals();
 
     // Create toon gradient map for anime look
-    const gradientData = new Uint8Array([0, 80, 160, 255]);
-    const gradientMap = new THREE.DataTexture(gradientData, 4, 1, THREE.RedFormat);
-    gradientMap.minFilter = THREE.NearestFilter;
-    gradientMap.magFilter = THREE.NearestFilter;
-    gradientMap.needsUpdate = true;
-
     const mat = new THREE.MeshToonMaterial({
       vertexColors: true,
-      gradientMap,
+      gradientMap: sharedGradientMap,
       side: THREE.DoubleSide,
     });
 

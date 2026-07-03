@@ -5,16 +5,8 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '@/stores/gameStore';
 import { Html } from '@react-three/drei';
+import { createToonMaterial } from '@/lib/game/toonMaterial';
 import type { NPCState } from '@/stores/gameStore';
-
-function createToonMaterial(color: string) {
-  const gradientData = new Uint8Array([0, 100, 200, 255]);
-  const gradientMap = new THREE.DataTexture(gradientData, 4, 1, THREE.RedFormat);
-  gradientMap.minFilter = THREE.NearestFilter;
-  gradientMap.magFilter = THREE.NearestFilter;
-  gradientMap.needsUpdate = true;
-  return new THREE.MeshToonMaterial({ color, gradientMap });
-}
 
 function HumanNPC({ npc }: { npc: NPCState }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -22,6 +14,9 @@ function HumanNPC({ npc }: { npc: NPCState }) {
 
   const bodyMat = useMemo(() => createToonMaterial(npc.color), [npc.color]);
   const skinMat = useMemo(() => createToonMaterial('#ffe0bd'), []);
+  const hairMat = useMemo(() => createToonMaterial('#333333'), []);
+  const pantsMat = useMemo(() => createToonMaterial('#443322'), []);
+  const eyeMat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#4466ff' }), []);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !npc.isAlive) return;
@@ -51,17 +46,15 @@ function HumanNPC({ npc }: { npc: NPCState }) {
           <sphereGeometry args={[0.28, 8, 8]} />
         </mesh>
         {/* Hair */}
-        <mesh material={createToonMaterial('#333333')} position={[0, 1.95, 0]}>
+        <mesh material={hairMat} position={[0, 1.95, 0]}>
           <sphereGeometry args={[0.3, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
         </mesh>
         {/* Eyes */}
-        <mesh position={[-0.09, 1.88, 0.24]}>
+        <mesh position={[-0.09, 1.88, 0.24]} material={eyeMat}>
           <sphereGeometry args={[0.04, 6, 6]} />
-          <meshBasicMaterial color="#4466ff" />
         </mesh>
-        <mesh position={[0.09, 1.88, 0.24]}>
+        <mesh position={[0.09, 1.88, 0.24]} material={eyeMat}>
           <sphereGeometry args={[0.04, 6, 6]} />
-          <meshBasicMaterial color="#4466ff" />
         </mesh>
         {/* Left arm */}
         <group position={[-0.4, 1.2, 0]}>
@@ -82,10 +75,10 @@ function HumanNPC({ npc }: { npc: NPCState }) {
           </mesh>
         </group>
         {/* Legs */}
-        <mesh material={createToonMaterial('#443322')} position={[-0.12, 0.5, 0]} castShadow>
+        <mesh material={pantsMat} position={[-0.12, 0.5, 0]} castShadow>
           <capsuleGeometry args={[0.09, 0.35, 4, 6]} />
         </mesh>
-        <mesh material={createToonMaterial('#443322')} position={[0.12, 0.5, 0]} castShadow>
+        <mesh material={pantsMat} position={[0.12, 0.5, 0]} castShadow>
           <capsuleGeometry args={[0.09, 0.35, 4, 6]} />
         </mesh>
       </group>
@@ -129,6 +122,7 @@ function AnimalNPC({ npc }: { npc: NPCState }) {
   const animTime = useRef(Math.random() * 100);
 
   const bodyMat = useMemo(() => createToonMaterial(npc.color), [npc.color]);
+  const stingerMat = useMemo(() => createToonMaterial('#ff6633'), []);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !npc.isAlive) return;
@@ -244,7 +238,7 @@ function AnimalNPC({ npc }: { npc: NPCState }) {
               </mesh>
             ))}
             {/* Stinger */}
-            <mesh material={createToonMaterial('#ff6633')} position={[0, -0.65, 0]} castShadow>
+            <mesh material={stingerMat} position={[0, -0.65, 0]} castShadow>
               <coneGeometry args={[0.04, 0.12, 4]} />
             </mesh>
           </group>

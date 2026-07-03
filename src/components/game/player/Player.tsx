@@ -6,17 +6,12 @@ import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '@/stores/gameStore';
 import { ELEMENT_COLORS } from '@/lib/game/constants';
 import { Html } from '@react-three/drei';
+import { sharedGradientMap, createToonMaterial } from '@/lib/game/toonMaterial';
 
-function createToonMaterial(color: string, emissive?: string, emissiveIntensity?: number) {
-  const gradientData = new Uint8Array([0, 100, 200, 255]);
-  const gradientMap = new THREE.DataTexture(gradientData, 4, 1, THREE.RedFormat);
-  gradientMap.minFilter = THREE.NearestFilter;
-  gradientMap.magFilter = THREE.NearestFilter;
-  gradientMap.needsUpdate = true;
-
+function createPlayerToonMaterial(color: string, emissive?: string, emissiveIntensity?: number) {
   return new THREE.MeshToonMaterial({
     color,
-    gradientMap,
+    gradientMap: sharedGradientMap,
     emissive: emissive || '#000000',
     emissiveIntensity: emissiveIntensity || 0,
   });
@@ -53,11 +48,14 @@ export function Player() {
   const stats = useGameStore((s) => s.stats);
 
   // Create materials
-  const skinMat = useMemo(() => createToonMaterial(appearance.skinTone), [appearance.skinTone]);
-  const hairMat = useMemo(() => createToonMaterial(appearance.hairColor), [appearance.hairColor]);
-  const outfitMat = useMemo(() => createToonMaterial(appearance.outfitColor), [appearance.outfitColor]);
-  const eyeMat = useMemo(() => createToonMaterial(appearance.eyeColor, appearance.eyeColor, 0.5), [appearance.eyeColor]);
-  const weaponMat = useMemo(() => createToonMaterial('#cccccc', ELEMENT_COLORS[currentElement], 0.3), [currentElement]);
+  const skinMat = useMemo(() => createPlayerToonMaterial(appearance.skinTone), [appearance.skinTone]);
+  const hairMat = useMemo(() => createPlayerToonMaterial(appearance.hairColor), [appearance.hairColor]);
+  const outfitMat = useMemo(() => createPlayerToonMaterial(appearance.outfitColor), [appearance.outfitColor]);
+  const eyeMat = useMemo(() => createPlayerToonMaterial(appearance.eyeColor, appearance.eyeColor, 0.5), [appearance.eyeColor]);
+  const weaponMat = useMemo(() => createPlayerToonMaterial('#cccccc', ELEMENT_COLORS[currentElement], 0.3), [currentElement]);
+  const guardMat = useMemo(() => new THREE.MeshToonMaterial({ color: '#886622', gradientMap: sharedGradientMap }), []);
+  const shoeMat = useMemo(() => createToonMaterial('#443322'), []);
+  const whiteMat = useMemo(() => new THREE.MeshBasicMaterial({ color: 'white' }), []);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !bodyRef.current) return;
@@ -163,13 +161,11 @@ export function Player() {
           <sphereGeometry args={[0.06, 6, 6]} />
         </mesh>
         {/* Eye whites */}
-        <mesh position={[-0.1, 1.88, 0.28]}>
+        <mesh position={[-0.1, 1.88, 0.28]} material={whiteMat}>
           <planeGeometry args={[0.08, 0.06]} />
-          <meshBasicMaterial color="white" />
         </mesh>
-        <mesh position={[0.1, 1.88, 0.28]}>
+        <mesh position={[0.1, 1.88, 0.28]} material={whiteMat}>
           <planeGeometry args={[0.08, 0.06]} />
-          <meshBasicMaterial color="white" />
         </mesh>
 
         {/* Left arm */}
@@ -196,7 +192,7 @@ export function Player() {
               <boxGeometry args={[0.06, 0.8, 0.06]} />
             </mesh>
             {/* Weapon guard */}
-            <mesh position={[0, -0.1, 0]} material={new THREE.MeshToonMaterial({ color: '#886622' })}>
+            <mesh position={[0, -0.1, 0]} material={guardMat}>
               <boxGeometry args={[0.25, 0.04, 0.08]} />
             </mesh>
             {/* Element glow on weapon tip */}
@@ -212,7 +208,7 @@ export function Player() {
           <mesh material={outfitMat} position={[0, -0.2, 0]} castShadow>
             <capsuleGeometry args={[0.1, 0.35, 4, 6]} />
           </mesh>
-          <mesh material={createToonMaterial('#443322')} position={[0, -0.5, 0]} castShadow>
+          <mesh material={shoeMat} position={[0, -0.5, 0]} castShadow>
             <boxGeometry args={[0.18, 0.1, 0.3]} />
           </mesh>
         </group>
@@ -222,7 +218,7 @@ export function Player() {
           <mesh material={outfitMat} position={[0, -0.2, 0]} castShadow>
             <capsuleGeometry args={[0.1, 0.35, 4, 6]} />
           </mesh>
-          <mesh material={createToonMaterial('#443322')} position={[0, -0.5, 0]} castShadow>
+          <mesh material={shoeMat} position={[0, -0.5, 0]} castShadow>
             <boxGeometry args={[0.18, 0.1, 0.3]} />
           </mesh>
         </group>

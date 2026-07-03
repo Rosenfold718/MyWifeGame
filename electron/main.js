@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, globalShortcut, dialog } = require('electron');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
@@ -14,7 +14,7 @@ let PORT = 7890;
 const OUT_DIR = path.join(__dirname, '..', 'out');
 
 function startServer() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const mimeTypes = {
       '.html': 'text/html; charset=utf-8',
       '.js': 'text/javascript; charset=utf-8',
@@ -22,6 +22,7 @@ function startServer() {
       '.json': 'application/json',
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
       '.svg': 'image/svg+xml',
       '.ico': 'image/x-icon',
       '.woff': 'font/woff',
@@ -65,18 +66,22 @@ function startServer() {
       });
     });
 
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        // Port taken, try random
+        server.listen(0, '127.0.0.1', () => {
+          PORT = server.address().port;
+          console.log(`[Эфирная Сага] Fallback port: ${PORT}`);
+          resolve();
+        });
+      } else {
+        reject(err);
+      }
+    });
+
     server.listen(PORT, '127.0.0.1', () => {
       console.log(`[Эфирная Сага] Game server ready → http://127.0.0.1:${PORT}`);
       resolve();
-    });
-
-    server.on('error', () => {
-      // Port taken, try random
-      server.listen(0, '127.0.0.1', () => {
-        PORT = server.address().port;
-        console.log(`[Эфирная Сага] Fallback port: ${PORT}`);
-        resolve();
-      });
     });
   });
 }
@@ -87,7 +92,7 @@ function createWindow() {
     height: 800,
     minWidth: 1024,
     minHeight: 680,
-    title: 'Эфирная Сага',
+    title: 'Эфирная Сага — Aetherial Saga',
     backgroundColor: '#0a0015',
     show: false,
     webPreferences: {
@@ -95,13 +100,17 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       webgl: true,
+      // Performance
+      backgroundThrottling: false,
     },
   });
 
   mainWindow.setMenuBarVisibility(false);
 
+  // Show window once content is ready
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    mainWindow.focus();
   });
 
   mainWindow.loadURL(`http://127.0.0.1:${PORT}`);
@@ -109,12 +118,24 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  // Handle external links (open in system browser)
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    require('electron').shell.openExternal(url);
+    return { action: 'deny' };
+  });
 }
 
 async function main() {
-  // Single instance
+  // Single instance lock
   const gotLock = app.requestSingleInstanceLock();
   if (!gotLock) {
+    dialog.showMessageBoxSync({
+      type: 'info',
+      title: 'Эфирная Сага',
+      message: 'Игра уже запущена!',
+      buttons: ['OK'],
+    });
     app.quit();
     return;
   }
@@ -127,7 +148,18 @@ async function main() {
   });
 
   await app.whenReady();
-  await startServer();
+
+  try {
+    await startServer();
+  } catch (err) {
+    dialog.showErrorBox(
+      'Ошибка запуска сервера',
+      `Не удалось запустить внутренний сервер:\n${err.message}`
+    );
+    app.quit();
+    return;
+  }
+
   createWindow();
 
   app.on('window-all-closed', () => {

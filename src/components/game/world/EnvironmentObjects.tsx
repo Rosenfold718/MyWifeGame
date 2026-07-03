@@ -1,23 +1,9 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-import { getTerrainHeight, getBiomeAtPosition, noise2D } from '@/lib/game/noise';
-
-// Toon material factory
-function createToonMaterial(color: string) {
-  const gradientData = new Uint8Array([0, 100, 200, 255]);
-  const gradientMap = new THREE.DataTexture(gradientData, 4, 1, THREE.RedFormat);
-  gradientMap.minFilter = THREE.NearestFilter;
-  gradientMap.magFilter = THREE.NearestFilter;
-  gradientMap.needsUpdate = true;
-
-  return new THREE.MeshToonMaterial({
-    color,
-    gradientMap,
-  });
-}
+import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
+import { createToonMaterial } from '@/lib/game/toonMaterial';
 
 // Tree component for forest biome
 function Tree({ position }: { position: [number, number, number] }) {
