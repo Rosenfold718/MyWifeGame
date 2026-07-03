@@ -45,7 +45,10 @@ function CameraController() {
   useEffect(() => {
     const canvas = gl.domElement;
 
-    const onClick = () => {
+    const onClick = (e: MouseEvent) => {
+      // Don't steal pointer lock when clicking interactive UI elements
+      const target = e.target as HTMLElement;
+      if (target.closest('button, [role="button"], input, select, textarea, a, label, [data-no-pointerlock]')) return;
       if (!isPointerLocked.current) {
         try { canvas.requestPointerLock(); } catch(_) {}
       }
@@ -94,20 +97,21 @@ function CameraController() {
       targetDistance.current = Math.max(2.5, Math.min(15, targetDistance.current + e.deltaY * 0.008));
     };
 
-    canvas.addEventListener('click', onClick);
+    // Listen on document so clicks anywhere (even on HUD overlays) trigger pointer lock
+    document.addEventListener('click', onClick);
     document.addEventListener('pointerlockchange', onPointerLockChange);
     document.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('wheel', onWheel);
+    document.addEventListener('wheel', onWheel);
 
     return () => {
-      canvas.removeEventListener('click', onClick);
+      document.removeEventListener('click', onClick);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
       document.removeEventListener('mousemove', onMouseMove);
-      canvas.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('mouseup', onMouseUp);
-      canvas.removeEventListener('wheel', onWheel);
+      document.removeEventListener('wheel', onWheel);
     };
   }, [gl]);
 

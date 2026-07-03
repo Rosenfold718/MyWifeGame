@@ -148,3 +148,20 @@ Stage Summary:
 - No object jitter from re-renders
 - Smaller, more manageable world with smoother terrain
 - Player no longer falls through ground
+---
+Task ID: 1
+Agent: main
+Task: Fix mouse camera control — pointer lock not activating
+
+Work Log:
+- Diagnosed root cause: click listener for pointer lock was on `gl.domElement` (canvas), but ScreenShake wrapper div and GameHUD overlays intercepted clicks before they reached the canvas
+- Changed `canvas.addEventListener("click", onClick)` to `document.addEventListener("click", onClick)` so clicks anywhere on the page trigger pointer lock
+- Added UI element guard in onClick handler: skips pointer lock when clicking buttons, inputs, or elements with `[data-no-pointerlock]`
+- Also moved `mousedown`, `mouseup`, and `wheel` listeners from `canvas` to `document` for consistency
+- Reverted accidental `pointer-events: none` on ScreenShake wrapper (would block R3F canvas events like onPointerDown for attacks)
+- Verified no console errors, game renders and enters play mode correctly
+
+Stage Summary:
+- Fixed: Mouse camera control now works — clicking anywhere activates pointer lock, mouse movement rotates camera
+- File changed: src/components/game/world/GameWorld.tsx (event listeners moved to document)
+
