@@ -12,6 +12,7 @@ import { sharedGradientMap, createToonMaterial } from '@/lib/game/toonMaterial';
 function Tree({ position }: { position: [number, number, number] }) {
   const groupRef = useRef<THREE.Group>(null);
   const swayOffset = useMemo(() => Math.random() * 100, []);
+  const scale = useMemo(() => 0.8 + Math.random() * 0.6, []);
 
   const trunkMat = useMemo(() => createToonMaterial('#5a3a1a'), []);
   const rootMat = useMemo(() => createToonMaterial('#4a2a10'), []);
@@ -22,8 +23,6 @@ function Tree({ position }: { position: [number, number, number] }) {
     return { base, dark };
   }, []);
 
-  const scale = 0.8 + Math.random() * 0.6;
-
   useFrame(() => {
     if (!groupRef.current) return;
     const t = Date.now() * 0.0005 + swayOffset;
@@ -33,9 +32,9 @@ function Tree({ position }: { position: [number, number, number] }) {
 
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
-      {/* Trunk (tapered) */}
-      <mesh material={trunkMat} position={[0, 2.2, 0]} castShadow>
-        <cylinderGeometry args={[0.12, 0.28, 4.2, 7]} />
+      {/* Trunk (tapered) - reduced height */}
+      <mesh material={trunkMat} position={[0, 1.4, 0]} castShadow>
+        <cylinderGeometry args={[0.12, 0.28, 2.8, 7]} />
       </mesh>
 
       {/* Roots */}
@@ -55,25 +54,25 @@ function Tree({ position }: { position: [number, number, number] }) {
         </mesh>
       ))}
 
-      {/* Foliage clusters (spheres instead of cones) */}
-      <mesh material={leafMats.base} position={[0, 4.8, 0]} castShadow>
-        <sphereGeometry args={[1.4, 8, 6]} />
+      {/* Foliage clusters (spheres) - reduced height ~40% */}
+      <mesh material={leafMats.base} position={[0, 2.9, 0]} castShadow>
+        <sphereGeometry args={[1.0, 8, 6]} />
       </mesh>
-      <mesh material={leafMats.dark} position={[0.6, 5.5, 0.3]} castShadow>
-        <sphereGeometry args={[0.9, 7, 5]} />
+      <mesh material={leafMats.dark} position={[0.6, 3.3, 0.3]} castShadow>
+        <sphereGeometry args={[0.65, 7, 5]} />
       </mesh>
-      <mesh material={leafMats.base} position={[-0.5, 5.3, -0.4]} castShadow>
-        <sphereGeometry args={[1.0, 7, 5]} />
+      <mesh material={leafMats.base} position={[-0.5, 3.2, -0.4]} castShadow>
+        <sphereGeometry args={[0.72, 7, 5]} />
       </mesh>
-      <mesh material={leafMats.dark} position={[0.2, 6.2, -0.2]} castShadow>
-        <sphereGeometry args={[0.8, 7, 5]} />
+      <mesh material={leafMats.dark} position={[0.2, 3.7, -0.2]} castShadow>
+        <sphereGeometry args={[0.58, 7, 5]} />
       </mesh>
-      <mesh material={leafMats.base} position={[-0.3, 6.0, 0.5]} castShadow>
-        <sphereGeometry args={[0.7, 6, 5]} />
+      <mesh material={leafMats.base} position={[-0.3, 3.6, 0.5]} castShadow>
+        <sphereGeometry args={[0.5, 6, 5]} />
       </mesh>
       {/* Top cluster */}
-      <mesh material={leafMats.dark} position={[0, 6.6, 0]} castShadow>
-        <sphereGeometry args={[0.6, 6, 5]} />
+      <mesh material={leafMats.dark} position={[0, 4.0, 0]} castShadow>
+        <sphereGeometry args={[0.43, 6, 5]} />
       </mesh>
     </group>
   );
@@ -102,15 +101,15 @@ function MagicTree({ position }: { position: [number, number, number] }) {
     opacity: 0.85,
   }), []);
 
-  const scale = 0.9 + Math.random() * 0.5;
+  const scale = useMemo(() => 0.9 + Math.random() * 0.5, []);
 
-  // Orb positions
+  // Orb positions - reduced height ~40%
   const orbPositions = useMemo(() => [
-    [-1.5, 4, 1] as [number, number, number],
-    [1.8, 5, -1] as [number, number, number],
-    [0.5, 6.5, 1.5] as [number, number, number],
-    [-1, 3.5, -1.2] as [number, number, number],
-    [0, 7, 0.5] as [number, number, number],
+    [-1.5, 2.5, 1] as [number, number, number],
+    [1.8, 3.2, -1] as [number, number, number],
+    [0.5, 4.1, 1.5] as [number, number, number],
+    [-1, 2.2, -1.2] as [number, number, number],
+    [0, 4.4, 0.5] as [number, number, number],
   ], []);
 
   useFrame((_, delta) => {
@@ -132,29 +131,29 @@ function MagicTree({ position }: { position: [number, number, number] }) {
 
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
-      {/* Trunk (twisted, dark purple) */}
-      <mesh material={trunkMat} position={[0, 2.8, 0]} castShadow>
-        <cylinderGeometry args={[0.15, 0.35, 5.5, 7]} />
+      {/* Trunk (twisted, dark purple) - reduced height */}
+      <mesh material={trunkMat} position={[0, 1.8, 0]} castShadow>
+        <cylinderGeometry args={[0.15, 0.35, 3.6, 7]} />
       </mesh>
       {/* Trunk knot detail */}
-      <mesh material={trunkMat} position={[0.15, 1.5, 0.1]} castShadow>
+      <mesh material={trunkMat} position={[0.15, 1.0, 0.1]} castShadow>
         <sphereGeometry args={[0.15, 6, 5]} scale={[0.8, 0.6, 0.8]} />
       </mesh>
 
-      {/* Translucent foliage */}
-      <mesh material={leafMat} position={[0, 6, 0]} castShadow>
-        <sphereGeometry args={[2.8, 10, 8]} />
+      {/* Translucent foliage - reduced height */}
+      <mesh material={leafMat} position={[0, 3.8, 0]} castShadow>
+        <sphereGeometry args={[2.0, 10, 8]} />
       </mesh>
       {/* Secondary foliage */}
-      <mesh material={leafMat} position={[0.8, 7, 0.5]} castShadow>
-        <sphereGeometry args={[1.8, 8, 6]} />
+      <mesh material={leafMat} position={[0.8, 4.5, 0.5]} castShadow>
+        <sphereGeometry args={[1.3, 8, 6]} />
       </mesh>
-      <mesh material={leafMat} position={[-1.0, 6.5, -0.8]} castShadow>
-        <sphereGeometry args={[1.5, 8, 6]} />
+      <mesh material={leafMat} position={[-1.0, 4.2, -0.8]} castShadow>
+        <sphereGeometry args={[1.1, 8, 6]} />
       </mesh>
 
       {/* Point light for glow */}
-      <pointLight color="#9955dd" intensity={0.5} distance={10} position={[0, 5, 0]} />
+      <pointLight color="#9955dd" intensity={0.5} distance={10} position={[0, 3.2, 0]} />
 
       {/* Floating orbs */}
       {orbPositions.map((pos, i) => (
@@ -238,8 +237,8 @@ function Crystal({ position }: { position: [number, number, number] }) {
     emissiveIntensity: 0.4,
   }), [crystalColors]);
 
-  const scale = 0.5 + Math.random() * 1.5;
-  const rotY = Math.random() * Math.PI;
+  const scale = useMemo(() => 0.5 + Math.random() * 1.5, []);
+  const rotY = useMemo(() => Math.random() * Math.PI, []);
 
   // Crystal cluster offsets
   const crystals = useMemo(() => [
@@ -281,8 +280,7 @@ function Crystal({ position }: { position: [number, number, number] }) {
 function Cactus({ position }: { position: [number, number, number] }) {
   const mat = useMemo(() => createToonMaterial('#2d6b2d'), []);
   const spineMat = useMemo(() => createToonMaterial('#1a441a'), []);
-
-  const scale = 0.7 + Math.random() * 0.6;
+  const scale = useMemo(() => 0.7 + Math.random() * 0.6, []);
 
   return (
     <group position={position} scale={[scale, scale, scale]}>
@@ -343,7 +341,7 @@ function IceFormation({ position }: { position: [number, number, number] }) {
     emissiveIntensity: 0.25,
   }), []);
 
-  const scale = 0.8 + Math.random() * 1.5;
+  const scale = useMemo(() => 0.8 + Math.random() * 1.5, []);
 
   // Ice spike cluster
   const spikes = useMemo(() => [
@@ -400,12 +398,11 @@ function IceFormation({ position }: { position: [number, number, number] }) {
 function PineTree({ position }: { position: [number, number, number] }) {
   const groupRef = useRef<THREE.Group>(null);
   const swayOffset = useMemo(() => Math.random() * 100, []);
+  const scale = useMemo(() => 0.7 + Math.random() * 0.6, []);
 
   const trunkMat = useMemo(() => createToonMaterial('#4a3a2a'), []);
   const leafMat = useMemo(() => createToonMaterial('#1a4a3a'), []);
   const snowMat = useMemo(() => createToonMaterial('#ddeeff'), []);
-
-  const scale = 0.7 + Math.random() * 0.6;
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -415,44 +412,44 @@ function PineTree({ position }: { position: [number, number, number] }) {
 
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
-      {/* Trunk */}
-      <mesh material={trunkMat} position={[0, 1.5, 0]} castShadow>
-        <cylinderGeometry args={[0.1, 0.2, 3, 6]} />
+      {/* Trunk - reduced height */}
+      <mesh material={trunkMat} position={[0, 1.0, 0]} castShadow>
+        <cylinderGeometry args={[0.1, 0.2, 2.0, 6]} />
       </mesh>
 
-      {/* Bottom cone layer */}
-      <mesh material={leafMat} position={[0, 3.2, 0]} castShadow>
-        <coneGeometry args={[1.6, 2.5, 7]} />
+      {/* Bottom cone layer - reduced */}
+      <mesh material={leafMat} position={[0, 2.0, 0]} castShadow>
+        <coneGeometry args={[1.1, 1.7, 7]} />
       </mesh>
       {/* Bottom snow cap */}
-      <mesh material={snowMat} position={[0, 4.1, 0]} rotation={[0, 0, 0]}>
-        <coneGeometry args={[1.0, 0.6, 7]} />
+      <mesh material={snowMat} position={[0, 2.6, 0]} rotation={[0, 0, 0]}>
+        <coneGeometry args={[0.7, 0.4, 7]} />
       </mesh>
 
-      {/* Middle cone layer */}
-      <mesh material={leafMat} position={[0, 4.8, 0]} castShadow>
-        <coneGeometry args={[1.2, 2.2, 7]} />
+      {/* Middle cone layer - reduced */}
+      <mesh material={leafMat} position={[0, 3.0, 0]} castShadow>
+        <coneGeometry args={[0.85, 1.5, 7]} />
       </mesh>
       {/* Middle snow cap */}
-      <mesh material={snowMat} position={[0, 5.5, 0]}>
-        <coneGeometry args={[0.75, 0.5, 7]} />
+      <mesh material={snowMat} position={[0, 3.5, 0]}>
+        <coneGeometry args={[0.5, 0.35, 7]} />
       </mesh>
 
-      {/* Top cone layer */}
-      <mesh material={leafMat} position={[0, 6.0, 0]} castShadow>
-        <coneGeometry args={[0.85, 1.8, 7]} />
+      {/* Top cone layer - reduced */}
+      <mesh material={leafMat} position={[0, 3.8, 0]} castShadow>
+        <coneGeometry args={[0.6, 1.2, 7]} />
       </mesh>
       {/* Top snow cap */}
-      <mesh material={snowMat} position={[0, 6.6, 0]}>
-        <coneGeometry args={[0.5, 0.4, 7]} />
+      <mesh material={snowMat} position={[0, 4.2, 0]}>
+        <coneGeometry args={[0.35, 0.25, 7]} />
       </mesh>
 
-      {/* Tip */}
-      <mesh material={leafMat} position={[0, 7.0, 0]}>
-        <coneGeometry args={[0.3, 0.6, 5]} />
+      {/* Tip - reduced */}
+      <mesh material={leafMat} position={[0, 4.5, 0]}>
+        <coneGeometry args={[0.2, 0.4, 5]} />
       </mesh>
-      <mesh material={snowMat} position={[0, 7.2, 0]}>
-        <sphereGeometry args={[0.12, 6, 4]} />
+      <mesh material={snowMat} position={[0, 4.7, 0]}>
+        <sphereGeometry args={[0.08, 6, 4]} />
       </mesh>
     </group>
   );
@@ -463,7 +460,7 @@ function PineTree({ position }: { position: [number, number, number] }) {
 // ============================================
 function GrassTuft({ position }: { position: [number, number, number] }) {
   const mat = useMemo(() => createToonMaterial('#4a8a3a'), []);
-  const count = 3 + Math.floor(Math.random() * 4);
+  const count = useMemo(() => 3 + Math.floor(Math.random() * 4), []);
 
   // Pre-generate random values to avoid re-renders
   const blades = useMemo(() =>
@@ -500,6 +497,7 @@ function GrassTuft({ position }: { position: [number, number, number] }) {
 function WaterPatch({ position }: { position: [number, number, number] }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const baseY = position[1] - 2;
+  const size = useMemo(() => 8 + Math.random() * 12, []);
 
   const waterMat = useMemo(() => new THREE.MeshToonMaterial({
     color: '#2266aa',
@@ -512,8 +510,6 @@ function WaterPatch({ position }: { position: [number, number, number] }) {
     if (!meshRef.current) return;
     meshRef.current.position.y = baseY + Math.sin(Date.now() * 0.001) * 0.1;
   });
-
-  const size = 8 + Math.random() * 12;
 
   return (
     <mesh
@@ -542,70 +538,64 @@ export function EnvironmentObjects() {
 
     let seedCounter = 0;
 
-    // Forest zone objects
-    for (let i = 0; i < 50; i++) {
-      const angle = seededRandom(seedCounter++) * Math.PI * 2;
-      const dist = 10 + seededRandom(seedCounter++) * 110;
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
+    // Forest zone objects (x: -35 to 35, z: -35 to 35) — ~25 trees, ~3 magic, ~15 rocks, ~10 grass
+    for (let i = 0; i < 60; i++) {
+      const x = -35 + seededRandom(seedCounter++) * 70;
+      const z = -35 + seededRandom(seedCounter++) * 70;
       const biome = getBiomeAtPosition(x, z);
       if (biome !== 'forest') continue;
 
       const y = getTerrainHeight(x, z);
       const r = seededRandom(seedCounter++);
 
-      if (r < 0.35) {
+      if (r < 0.42) {
         result.push({ type: 'tree', position: [x, y, z] });
-      } else if (r < 0.5) {
+      } else if (r < 0.47) {
         result.push({ type: 'magicTree', position: [x, y, z] });
-      } else if (r < 0.65) {
+      } else if (r < 0.72) {
         result.push({ type: 'rock', position: [x, y, z], props: { color: '#556655', mossy: true } });
-      } else if (r < 0.8) {
+      } else if (r < 0.89) {
         result.push({ type: 'grass', position: [x, y, z] });
       } else {
         result.push({ type: 'rock', position: [x, y, z], props: { color: '#887766' } });
       }
     }
 
-    // Desert zone objects
-    for (let i = 0; i < 30; i++) {
-      const x = 100 + seededRandom(seedCounter++) * 100;
-      const z = -80 + seededRandom(seedCounter++) * 160;
+    // Desert zone objects (x: 20 to 48, z: -10 to 30) — ~12 crystals, ~8 cacti, ~8 rocks
+    for (let i = 0; i < 35; i++) {
+      const x = 20 + seededRandom(seedCounter++) * 28;
+      const z = -10 + seededRandom(seedCounter++) * 40;
       const biome = getBiomeAtPosition(x, z);
       if (biome !== 'desert') continue;
 
       const y = getTerrainHeight(x, z);
       const r = seededRandom(seedCounter++);
 
-      if (r < 0.25) {
+      if (r < 0.43) {
         result.push({ type: 'crystal', position: [x, y, z] });
-      } else if (r < 0.45) {
+      } else if (r < 0.66) {
         result.push({ type: 'cactus', position: [x, y, z] });
-      } else if (r < 0.7) {
-        result.push({ type: 'rock', position: [x, y, z], props: { color: '#c4a460' } });
       } else {
-        result.push({ type: 'rock', position: [x, y, z], props: { color: '#aa8844' } });
+        result.push({ type: 'rock', position: [x, y, z], props: { color: '#c4a460' } });
       }
     }
 
-    // Tundra zone objects
-    for (let i = 0; i < 30; i++) {
-      const x = -120 + seededRandom(seedCounter++) * 140;
-      const z = -200 + seededRandom(seedCounter++) * 100;
+    // Tundra zone objects (x: -45 to -10, z: -45 to -15) — ~15 pine, ~10 ice, ~8 rocks, ~4 water
+    for (let i = 0; i < 45; i++) {
+      const x = -45 + seededRandom(seedCounter++) * 35;
+      const z = -45 + seededRandom(seedCounter++) * 30;
       const biome = getBiomeAtPosition(x, z);
       if (biome !== 'tundra') continue;
 
       const y = getTerrainHeight(x, z);
       const r = seededRandom(seedCounter++);
 
-      if (r < 0.3) {
+      if (r < 0.40) {
         result.push({ type: 'pineTree', position: [x, y, z] });
-      } else if (r < 0.5) {
+      } else if (r < 0.67) {
         result.push({ type: 'ice', position: [x, y, z] });
-      } else if (r < 0.7) {
+      } else if (r < 0.89) {
         result.push({ type: 'rock', position: [x, y, z], props: { color: '#8899aa' } });
-      } else if (r < 0.85) {
-        result.push({ type: 'ice', position: [x, y, z] });
       } else {
         result.push({ type: 'water', position: [x, y, z] });
       }

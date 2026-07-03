@@ -16,24 +16,26 @@ import { sharedGradientMap } from '@/lib/game/toonMaterial';
 import { Sky } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 
+// Shared camera yaw ref — CameraController writes, InputHandler reads
+const _cameraYaw = { value: 0 };
+
 // ============================================
-// AAA CAMERA CONTROLLER
-// Smooth spring-based follow, collision-aware
+// CAMERA CONTROLLER
+// Spring-based follow camera
 // ============================================
 function CameraController() {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
   const pitch = useRef(-0.35);
-  const distance = useRef(8);
-  const targetDistance = useRef(8);
-  const currentPos = useRef(new THREE.Vector3(0, 5, 10));
+  const distance = useRef(7);
+  const targetDistance = useRef(7);
+  const currentPos = useRef(new THREE.Vector3(0, 5, 8));
   const currentLookAt = useRef(new THREE.Vector3());
   const isPointerLocked = useRef(false);
   const velocity = useRef(new THREE.Vector3());
   const playerPosition = useGameStore((s) => s.playerPosition);
   const isDodging = useGameStore((s) => s.isDodging);
   const isSprinting = useGameStore((s) => s.isSprinting);
-  const comboCount = useGameStore((s) => s.comboCount);
 
   useEffect(() => {
     const canvas = gl.domElement;
@@ -46,13 +48,13 @@ function CameraController() {
     };
     const onMouseMove = (e: MouseEvent) => {
       if (!isPointerLocked.current) return;
-      const sens = 0.002;
+      const sens = 0.003;
       yaw.current -= e.movementX * sens;
-      pitch.current = Math.max(-1.2, Math.min(0.5, pitch.current - e.movementY * sens));
-      useGameStore.getState().setPlayerRotation(yaw.current);
+      pitch.current = Math.max(-1.0, Math.min(0.6, pitch.current - e.movementY * sens));
+      _cameraYaw.value = yaw.current;
     };
     const onWheel = (e: WheelEvent) => {
-      targetDistance.current = Math.max(3, Math.min(18, targetDistance.current + e.deltaY * 0.008));
+      targetDistance.current = Math.max(2.5, Math.min(15, targetDistance.current + e.deltaY * 0.008));
     };
 
     canvas.addEventListener('click', onClick);
@@ -68,46 +70,35 @@ function CameraController() {
     };
   }, [gl]);
 
-  useFrame(({ camera }, rawDelta) => {
-    const dt = Math.min(rawDelta, 0.05);
-
+  useFrame(() => {
     const px = playerPosition[0];
     const py = playerPosition[1];
     const pz = playerPosition[2];
 
-    // Combo camera shake
-    const shakeIntensity = comboCount === 3 ? 0.03 : 0;
-
     // Distance lerp
-    const targetDist = isDodging ? 6 : isSprinting ? 10 : targetDistance.current;
-    distance.current += (targetDist - distance.current) * 3 * dt;
+    const targetDist = isDodging ? 5 : isSprinting ? 10 : targetDistance.current;
+    distance.current += (targetDist - distance.current) * 5 * 0.016;
 
-    // Desired camera position
-    const camOffsetX = Math.sin(yaw.current) * Math.cos(pitch.current) * distance.current;
-    const camOffsetY = Math.sin(pitch.current) * distance.current;
-    const camOffsetZ = Math.cos(yaw.current) * Math.cos(pitch.current) * distance.current;
+    const d = distance.current;
+    const y = yaw.current;
+    const p = pitch.current;
 
+    // Desired camera position (behind and above player)
     const desiredPos = new THREE.Vector3(
-      px + camOffsetX,
-      py + 2 + camOffsetY,
-      pz + camOffsetZ
+      px + Math.sin(y) * Math.cos(p) * d,
+      py + 2.0 + Math.sin(p) * d,
+      pz + Math.cos(y) * Math.cos(p) * d
     );
 
-    // Add shake
-    if (shakeIntensity > 0) {
-      desiredPos.x += (Math.random() - 0.5) * shakeIntensity;
-      desiredPos.y += (Math.random() - 0.5) * shakeIntensity;
-    }
-
-    // Spring physics for smooth follow
-    const stiffness = isDodging ? 25 : 12;
-    const damping = isDodging ? 0.7 : 0.85;
+    // Spring follow
+    const stiffness = isDodging ? 20 : 10;
+    const damping = isDodging ? 0.75 : 0.85;
     const springForce = new THREE.Vector3().subVectors(desiredPos, currentPos.current).multiplyScalar(stiffness);
-    velocity.current.multiplyScalar(damping).add(springForce.multiplyScalar(dt));
-    currentPos.current.add(velocity.current.clone().multiplyScalar(dt));
+    velocity.current.multiplyScalar(damping).add(springForce.multiplyScalar(0.016));
+    currentPos.current.add(velocity.current.clone().multiplyScalar(0.016));
 
-    // Ground clamp (don't go below terrain + 1)
-    const groundY = getTerrainHeight(currentPos.current.x, currentPos.current.z) + 1;
+    // Ground clamp
+    const groundY = getTerrainHeight(currentPos.current.x, currentPos.current.z) + 1.5;
     if (currentPos.current.y < groundY) {
       currentPos.current.y = groundY;
       velocity.current.y = 0;
@@ -115,15 +106,15 @@ function CameraController() {
 
     // Smooth look-at
     const desiredLook = new THREE.Vector3(px, py + 1.2, pz);
-    currentLookAt.current.lerp(desiredLook, isDodging ? 0.4 : 0.15);
+    currentLookAt.current.lerp(desiredLook, 0.15);
 
     camera.position.copy(currentPos.current);
     camera.lookAt(currentLookAt.current);
 
     // FOV change for sprint
-    const targetFov = isSprinting ? 70 : 60;
+    const targetFov = isSprinting ? 68 : 58;
     const cam = camera as THREE.PerspectiveCamera;
-    cam.fov += (targetFov - cam.fov) * 3 * dt;
+    cam.fov += (targetFov - cam.fov) * 3 * 0.016;
     cam.updateProjectionMatrix();
   });
 
@@ -214,12 +205,11 @@ function Lighting() {
 }
 
 // ============================================
-// AAA INPUT HANDLER
-// Camera-relative movement with smooth acceleration
+// INPUT HANDLER
+// Camera-relative movement, proper direction
 // ============================================
 function InputHandler() {
   const keys = useRef<Set<string>>(new Set());
-  const moveDir = useRef(new THREE.Vector3());
   const currentSpeed = useRef(0);
   const playerPosition = useGameStore((s) => s.playerPosition);
   const stats = useGameStore((s) => s.stats);
@@ -243,72 +233,74 @@ function InputHandler() {
     if (store.isDodging) return;
 
     const k = keys.current;
-    const rot = store.playerRotation;
 
-    // Camera-relative input direction
+    // Read camera yaw from shared ref
+    const camYaw = _cameraYaw.value;
+
+    // Raw input (WASD/arrows)
+    // Camera is at +Z from player, so "forward" (W) = -Z world direction
     let inputX = 0;
     let inputZ = 0;
-    if (k.has('KeyW') || k.has('ArrowUp')) inputZ -= 1;
-    if (k.has('KeyS') || k.has('ArrowDown')) inputZ += 1;
-    if (k.has('KeyA') || k.has('ArrowLeft')) inputX -= 1;
-    if (k.has('KeyD') || k.has('ArrowRight')) inputX += 1;
+    if (k.has('KeyW') || k.has('ArrowUp')) inputZ = -1;   // forward
+    if (k.has('KeyS') || k.has('ArrowDown')) inputZ = 1;   // backward
+    if (k.has('KeyA') || k.has('ArrowLeft')) inputX = -1;  // left
+    if (k.has('KeyD') || k.has('ArrowRight')) inputX = 1;  // right
 
-    // Rotate input by camera yaw (camera-relative movement)
-    const sinR = Math.sin(rot);
-    const cosR = Math.cos(rot);
-    const worldX = inputX * cosR + inputZ * sinR;
-    const worldZ = -inputX * sinR + inputZ * cosR;
+    const hasInput = inputX !== 0 || inputZ !== 0;
 
-    const hasInput = worldX !== 0 || worldZ !== 0;
+    // Rotate input by camera yaw to get world-space movement
+    const sinC = Math.sin(camYaw);
+    const cosC = Math.cos(camYaw);
+    const worldX = inputX * cosC + inputZ * sinC;
+    const worldZ = -inputX * sinC + inputZ * cosC;
 
     // Normalize
-    const inputLen = Math.sqrt(worldX * worldX + worldZ * worldZ) || 1;
-    const normX = hasInput ? worldX / inputLen : 0;
-    const normZ = hasInput ? worldZ / inputLen : 0;
+    const len = Math.sqrt(worldX * worldX + worldZ * worldZ) || 1;
+    const normX = hasInput ? worldX / len : 0;
+    const normZ = hasInput ? worldZ / len : 0;
 
     // Sprint
     const wantSprint = k.has('ShiftLeft') && hasInput;
     store.setSprinting(wantSprint);
 
-    // Target speed with smooth acceleration/deceleration
+    // Speed
     const baseSpeed = stats.speed;
     const maxSpeed = wantSprint ? baseSpeed * 1.6 : baseSpeed;
-    const accel = hasInput ? (wantSprint ? 30 : 22) : 25; // deceleration is faster
+    const accel = hasInput ? (wantSprint ? 30 : 20) : 25;
     const targetSpeed = hasInput ? maxSpeed : 0;
 
-    // Smooth speed interpolation
     if (hasInput) {
       currentSpeed.current = Math.min(currentSpeed.current + accel * delta, targetSpeed);
     } else {
       currentSpeed.current = Math.max(currentSpeed.current - accel * 1.5 * delta, 0);
     }
 
-    // Stamina drain for sprinting
+    // Stamina drain
     if (wantSprint && currentSpeed.current > baseSpeed) {
       store.useStamina(15 * delta);
-      if (store.stats.stamina <= 0) {
-        store.setSprinting(false);
-      }
+      if (store.stats.stamina <= 0) store.setSprinting(false);
     }
 
     // Apply movement
-    if (currentSpeed.current > 0.1) {
+    if (currentSpeed.current > 0.05) {
       const dx = normX * currentSpeed.current * delta;
       const dz = normZ * currentSpeed.current * delta;
       const newX = playerPosition[0] + dx;
       const newZ = playerPosition[2] + dz;
 
-      // World bounds
-      const half = 150;
+      // World bounds (±48 for 100-size world)
+      const half = 48;
       const clampedX = Math.max(-half, Math.min(half, newX));
       const clampedZ = Math.max(-half, Math.min(half, newZ));
-      const groundY = getTerrainHeight(clampedX, clampedZ) + 0.1;
+      const groundY = getTerrainHeight(clampedX, clampedZ) + 0.3;
 
       store.setPlayerPosition([clampedX, groundY, clampedZ]);
 
-      // Auto-rotate player to face movement direction
+      // Player faces movement direction
+      // In Three.js: rotation.y = 0 means facing -Z
+      // atan2(dx, dz) gives angle from -Z axis
       if (hasInput) {
-        const targetRot = Math.atan2(-normX, -normZ);
+        const targetRot = Math.atan2(normX, normZ);
         store.setPlayerRotation(targetRot);
       }
     }
@@ -320,12 +312,12 @@ function InputHandler() {
         const el = elements[i];
         if (store.unlockedElements.includes(el)) {
           store.setCurrentElement(el);
-          k.delete(`Digit${i + 1}`); // prevent repeat
+          k.delete(`Digit${i + 1}`);
         }
       }
     }
 
-    // Interact with NPC (E)
+    // Interact (E)
     if (k.has('KeyE') && !store.isDialogueOpen) {
       k.delete('KeyE');
       const pos = store.playerPosition;
@@ -344,7 +336,6 @@ function InputHandler() {
     if (k.has('Space')) {
       k.delete('Space');
       if (store.isGrounded && currentSpeed.current > 1) {
-        // Dodge
         store.dodge([normX, 0, normZ]);
       } else if (store.isGrounded) {
         store.jump();
@@ -430,7 +421,7 @@ function WaterPlane() {
 
   return (
     <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} material={waterMat}>
-      <planeGeometry args={[300, 300]} />
+      <planeGeometry args={[120, 120]} />
     </mesh>
   );
 }
@@ -488,10 +479,10 @@ export function GameWorld() {
 
   return (
     <Canvas
-      shadows
+      shadows={{ type: THREE.PCFShadowMap }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
-      camera={{ fov: 60, near: 0.1, far: 500 }}
+      camera={{ fov: 58, near: 0.1, far: 200 }}
       style={{ background: '#0a0015' }}
       onPointerDown={(e) => {
         if (e.button === 0) {
@@ -501,9 +492,9 @@ export function GameWorld() {
           e.preventDefault();
           const rot = useGameStore.getState().playerRotation;
           useGameStore.getState().magicAttack([
-            -Math.sin(rot),
+            Math.sin(rot),
             0,
-            -Math.cos(rot),
+            Math.cos(rot),
           ]);
         }
       }}

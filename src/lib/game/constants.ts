@@ -9,10 +9,10 @@ export type BiomeType = 'forest' | 'desert' | 'tundra';
 export type NPCType = 'human' | 'animal';
 export type ItemType = 'weapon' | 'armor' | 'accessory' | 'potion_hp' | 'potion_mana' | 'potion_stamina' | 'material';
 
-export const WORLD_SIZE = 300;
-export const TERRAIN_SEGMENTS = 80;
-export const TERRAIN_HEIGHT_SCALE = 30;
-export const GRAVITY = -25;
+export const WORLD_SIZE = 100;
+export const TERRAIN_SEGMENTS = 100;
+export const TERRAIN_HEIGHT_SCALE = 12;
+export const GRAVITY = -20;
 
 export const ELEMENT_COLORS: Record<ElementType, string> = {
   fire: '#ff4444',
@@ -60,9 +60,9 @@ export const BIOME_COLORS: Record<BiomeType, { ground: string; fog: string; sky:
 };
 
 export const BIOME_ZONES: { biome: BiomeType; center: [number, number]; radius: number }[] = [
-  { biome: 'forest', center: [0, 0], radius: 120 },
-  { biome: 'desert', center: [150, 0], radius: 100 },
-  { biome: 'tundra', center: [-50, -150], radius: 110 },
+  { biome: 'forest', center: [0, 0], radius: 40 },
+  { biome: 'desert', center: [40, 10], radius: 30 },
+  { biome: 'tundra', center: [-25, -35], radius: 30 },
 ];
 
 export interface PlayerStats {
@@ -91,7 +91,7 @@ export const DEFAULT_STATS: PlayerStats = {
   armor: 5,
   attack: 15,
   magicAttack: 25,
-  speed: 8,
+  speed: 7,
   level: 1,
   exp: 0,
   expToNext: 100,
@@ -135,7 +135,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Эльфийский Проводник',
     type: 'human',
     biome: 'forest',
-    position: [10, 0, 15],
+    position: [8, 0, 10],
     color: '#44aa44',
     scale: 1,
     dialogue: [
@@ -150,7 +150,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Странствующий Торговец',
     type: 'human',
     biome: 'forest',
-    position: [-20, 0, 30],
+    position: [-12, 0, 15],
     color: '#cc8844',
     scale: 1,
     dialogue: [
@@ -165,7 +165,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Лесной Волк',
     type: 'animal',
     biome: 'forest',
-    position: [35, 0, -20],
+    position: [18, 0, -12],
     color: '#888888',
     scale: 0.7,
     dialogue: ['*рычит*', '*оскаливается*'],
@@ -177,7 +177,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Магическая Лиса',
     type: 'animal',
     biome: 'forest',
-    position: [-30, 0, -10],
+    position: [-15, 0, -8],
     color: '#ff6633',
     scale: 0.5,
     dialogue: [
@@ -191,7 +191,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Кристальный Мудрец',
     type: 'human',
     biome: 'desert',
-    position: [140, 0, 20],
+    position: [38, 0, 12],
     color: '#88aacc',
     scale: 1,
     dialogue: [
@@ -206,7 +206,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Пустынный Скорпион',
     type: 'animal',
     biome: 'desert',
-    position: [170, 0, -30],
+    position: [45, 0, -8],
     color: '#994422',
     scale: 0.8,
     dialogue: ['*щёлкает клешнями*'],
@@ -218,7 +218,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Пустынный Орёл',
     type: 'animal',
     biome: 'desert',
-    position: [130, 0, 50],
+    position: [35, 0, 25],
     color: '#cc9944',
     scale: 0.6,
     dialogue: ['*кричит в небе*', '*парит над тобой*'],
@@ -229,7 +229,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Ледяной Страж',
     type: 'human',
     biome: 'tundra',
-    position: [-60, 0, -140],
+    position: [-22, 0, -32],
     color: '#6699cc',
     scale: 1.2,
     dialogue: [
@@ -244,7 +244,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Ледяной Медведь',
     type: 'animal',
     biome: 'tundra',
-    position: [-30, 0, -170],
+    position: [-18, 0, -38],
     color: '#eeeeff',
     scale: 1.1,
     dialogue: ['*рычит*', '*встаёт на задние лапы*'],
@@ -256,7 +256,7 @@ export const NPC_DATA: NPCData[] = [
     name: 'Снежная Сова',
     type: 'animal',
     biome: 'tundra',
-    position: [-80, 0, -120],
+    position: [-30, 0, -28],
     color: '#ddeeff',
     scale: 0.4,
     dialogue: [

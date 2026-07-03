@@ -484,7 +484,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((s) => {
       const vy = s.playerVerticalVelocity + GRAVITY * delta;
       const newY = s.playerPosition[1] + vy * delta;
-      const groundY = getTerrainHeight(s.playerPosition[0], s.playerPosition[2]) + 0.1;
+      const groundY = getTerrainHeight(s.playerPosition[0], s.playerPosition[2]) + 0.3;
       const grounded = newY <= groundY;
       return {
         playerVerticalVelocity: grounded ? 0 : vy,
@@ -524,9 +524,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const rot = get().playerRotation;
     const attackRange = cd.range;
     const attackDir: [number, number, number] = [
-      -Math.sin(rot) * attackRange,
+      Math.sin(rot) * attackRange,
       0,
-      -Math.cos(rot) * attackRange,
+      Math.cos(rot) * attackRange,
     ];
 
     // Check NPC hits with wider arc for combo finisher
@@ -541,7 +541,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       // Check angle
       const npcAngle = Math.atan2(dx, dz);
-      const playerAngle = -rot;
+      const playerAngle = rot;
       let angleDiff = Math.abs(npcAngle - playerAngle);
       if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
       if (angleDiff > hitAngle / 2) continue;

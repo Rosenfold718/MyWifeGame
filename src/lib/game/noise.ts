@@ -4,42 +4,41 @@ export const noise2D = createNoise2D();
 export const noise3D = createNoise3D();
 
 export function getTerrainHeight(x: number, z: number): number {
-  // Base terrain - large rolling hills
   let height = 0;
 
-  // Large-scale features
-  height += noise2D(x * 0.005, z * 0.005) * 25;
+  // Very gentle rolling hills
+  height += noise2D(x * 0.012, z * 0.012) * 6;
 
-  // Medium detail
-  height += noise2D(x * 0.02, z * 0.02) * 8;
+  // Medium detail - subtle
+  height += noise2D(x * 0.04, z * 0.04) * 2.5;
 
-  // Small detail
-  height += noise2D(x * 0.08, z * 0.08) * 2;
+  // Small detail - very subtle
+  height += noise2D(x * 0.1, z * 0.1) * 0.8;
 
   // Flatten center area for spawn
   const distFromCenter = Math.sqrt(x * x + z * z);
-  if (distFromCenter < 15) {
-    const flatFactor = 1 - distFromCenter / 15;
-    height *= 1 - flatFactor * 0.9;
+  if (distFromCenter < 12) {
+    const flatFactor = 1 - distFromCenter / 12;
+    height *= 1 - flatFactor * 0.85;
   }
 
-  return height;
+  // Clamp max height to prevent extreme terrain
+  return Math.max(-3, Math.min(10, height));
 }
 
 export function getBiomeAtPosition(x: number, z: number): 'forest' | 'desert' | 'tundra' {
-  // Use noise to blend biomes naturally
-  const biomeNoise = noise2D(x * 0.003 + 500, z * 0.003 + 500);
+  const biomeNoise = noise2D(x * 0.015 + 500, z * 0.015 + 500);
 
-  if (biomeNoise < -0.2) return 'tundra';
-  if (biomeNoise > 0.2) return 'desert';
+  if (biomeNoise < -0.15) return 'tundra';
+  if (biomeNoise > 0.15) return 'desert';
   return 'forest';
 }
 
 export function getBiomeBlend(x: number, z: number): { forest: number; desert: number; tundra: number } {
-  const n = noise2D(x * 0.003 + 500, z * 0.003 + 500);
+  const n = noise2D(x * 0.015 + 500, z * 0.015 + 500);
 
-  const desert = Math.max(0, (n - 0.1) * 2.5);
-  const tundra = Math.max(0, (-n - 0.1) * 2.5);
+  const desert = Math.max(0, (n - 0.05) * 3.0);
+  const tundra = Math.max(0, (-n - 0.05) * 3.0);
   const forest = Math.max(0, 1 - desert - tundra);
 
   return { forest, desert, tundra };
@@ -52,35 +51,33 @@ export function getGroundColor(
   normal: { x: number; y: number; z: number }
 ): [number, number, number] {
   const blend = getBiomeBlend(x, z);
-  const slope = 1 - normal.y; // 0 = flat, 1 = vertical
+  const slope = 1 - normal.y;
 
-  // Forest colors
-  const forestGrass: [number, number, number] = [0.18, 0.45, 0.15];
-  const forestDirt: [number, number, number] = [0.35, 0.25, 0.15];
-  const forestRock: [number, number, number] = [0.4, 0.38, 0.35];
+  // Forest - lush green tones
+  const forestGrass: [number, number, number] = [0.22, 0.52, 0.18];
+  const forestDark: [number, number, number] = [0.15, 0.38, 0.12];
+  const forestDirt: [number, number, number] = [0.32, 0.24, 0.14];
+  const forestRock: [number, number, number] = [0.38, 0.36, 0.32];
 
-  // Desert colors
-  const desertSand: [number, number, number] = [0.82, 0.72, 0.42];
-  const desertRock: [number, number, number] = [0.65, 0.55, 0.35];
-  const desertCrystal: [number, number, number] = [0.6, 0.75, 0.85];
+  // Desert - warm golden tones
+  const desertSand: [number, number, number] = [0.85, 0.75, 0.45];
+  const desertDark: [number, number, number] = [0.72, 0.58, 0.32];
+  const desertRock: [number, number, number] = [0.62, 0.52, 0.32];
+  const desertCrystal: [number, number, number] = [0.55, 0.70, 0.82];
 
-  // Tundra colors
-  const tundraSnow: [number, number, number] = [0.9, 0.92, 0.95];
-  const tundraIce: [number, number, number] = [0.7, 0.82, 0.9];
-  const tundraRock: [number, number, number] = [0.5, 0.52, 0.55];
+  // Tundra - cool blue-white tones
+  const tundraSnow: [number, number, number] = [0.88, 0.91, 0.95];
+  const tundraIce: [number, number, number] = [0.68, 0.80, 0.88];
+  const tundraRock: [number, number, number] = [0.48, 0.50, 0.53];
 
-  // Height-based variation
-  const heightFactor = Math.min(1, height / 20);
+  const heightFactor = Math.min(1, Math.max(0, height / 8));
+  const rockMix = Math.pow(slope, 1.5);
 
-  // Slope-based rock mixing
-  const rockMix = Math.pow(slope, 2);
-
-  // Calculate biome color
   let r = 0, g = 0, b = 0;
 
-  // Forest contribution
+  // Forest
   const fColor = lerpColor(
-    lerpColor(forestGrass, forestDirt, heightFactor),
+    lerpColor(forestGrass, forestDark, heightFactor * 0.6),
     forestRock,
     rockMix
   );
@@ -88,19 +85,19 @@ export function getGroundColor(
   g += fColor[1] * blend.forest;
   b += fColor[2] * blend.forest;
 
-  // Desert contribution
+  // Desert
   const dColor = lerpColor(
-    lerpColor(desertSand, desertRock, heightFactor * 0.5),
-    desertCrystal,
-    Math.max(0, heightFactor - 0.5) * 2
+    lerpColor(desertSand, desertDark, heightFactor * 0.4),
+    lerpColor(desertRock, desertCrystal, Math.max(0, heightFactor - 0.5) * 2),
+    rockMix
   );
   r += dColor[0] * blend.desert;
   g += dColor[1] * blend.desert;
   b += dColor[2] * blend.desert;
 
-  // Tundra contribution
+  // Tundra
   const tColor = lerpColor(
-    lerpColor(tundraSnow, tundraIce, heightFactor),
+    lerpColor(tundraSnow, tundraIce, heightFactor * 0.7),
     tundraRock,
     rockMix
   );
@@ -108,8 +105,8 @@ export function getGroundColor(
   g += tColor[1] * blend.tundra;
   b += tColor[2] * blend.tundra;
 
-  // Add noise variation
-  const variation = (noise2D(x * 0.1, z * 0.1) * 0.05);
+  // Subtle noise variation for visual richness
+  const variation = noise2D(x * 0.15, z * 0.15) * 0.04;
   r = Math.max(0, Math.min(1, r + variation));
   g = Math.max(0, Math.min(1, g + variation));
   b = Math.max(0, Math.min(1, b + variation));

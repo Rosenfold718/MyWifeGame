@@ -123,7 +123,8 @@ export function Player() {
     // Clamp delta
     const dt = Math.min(delta, 0.05);
 
-    // Position & rotation
+    // Position & rotation (playerRotation = atan2(normX, normZ))
+    // Model faces +Z locally, which matches the atan2 convention
     groupRef.current.position.set(playerPosition[0], playerPosition[1], playerPosition[2]);
     groupRef.current.rotation.y = playerRotation;
 
