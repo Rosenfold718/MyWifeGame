@@ -1,0 +1,913 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→import { useState, useCallback, useEffect, memo } from 'react';
+     4→     4→import { motion, AnimatePresence } from 'framer-motion';
+     5→     5→import { useGameStore } from '@/stores/gameStore';
+     6→     6→import {
+     7→     7→  ELEMENT_COLORS,
+     8→     8→  ELEMENT_NAMES,
+     9→     9→  ELEMENT_ICONS,
+    10→    10→  BIOME_ZONES,
+    11→    11→  MANA_COSTS,
+    12→    12→} from '@/lib/game/constants';
+    13→    13→import type { ElementType, BiomeType } from '@/lib/game/constants';
+    14→    14→import {
+    15→    15→  Heart,
+    16→    16→  Droplets,
+    17→    17→  Zap,
+    18→    18→  Compass,
+    19→    19→  TreePine,
+    20→    20→  Snowflake,
+    21→    21→  Eye,
+    22→    22→  EyeOff,
+    23→    23→  Keyboard,
+    24→    24→  Swords,
+    25→    25→  Gem,
+    26→    26→} from 'lucide-react';
+    27→    27→
+    28→    28→// ============================================
+    29→    29→// MAIN HUD COMPONENT
+    30→    30→// ============================================
+    31→    31→
+    32→    32→export function GameHUD() {
+    33→    33→  return (
+    34→    34→    <div className="absolute inset-0 pointer-events-none select-none" style={{ zIndex: 10 }}>
+    35→    35→      <LowHPWarning />
+    36→    36→      <ManaEmptyFlash />
+    37→    37→      <TopLeftObjective />
+    38→    38→      <TopRightMinimap />
+    39→    39→      <BottomCenterStats />
+    40→    40→      <BottomRightSkillBar />
+    41→    41→      <BottomLeftControls />
+    42→    42→    </div>
+    43→    43→  );
+    44→    44→}
+    45→    45→
+    46→    46→// ============================================
+    47→    47→// 1. BOTTOM CENTER — CHARACTER STATS
+    48→    48→// ============================================
+    49→    49→
+    50→    50→const BottomCenterStats = memo(function BottomCenterStats() {
+    51→    51→  const stats = useGameStore((s) => s.stats);
+    52→    52→  const currentBiome = useGameStore((s) => s.currentBiome);
+    53→    53→  const playerName = useGameStore((s) => s.playerName);
+    54→    54→  const currentElement = useGameStore((s) => s.currentElement);
+    55→    55→
+    56→    56→  const hpPct = Math.max(0, (stats.hp / stats.maxHp) * 100);
+    57→    57→  const manaPct = Math.max(0, (stats.mana / stats.maxMana) * 100);
+    58→    58→  const staminaPct = Math.max(0, (stats.stamina / stats.maxStamina) * 100);
+    59→    59→  const expPct = stats.expToNext > 0 ? Math.max(0, (stats.exp / stats.expToNext) * 100) : 0;
+    60→    60→
+    61→    61→  const biomeConfig: Record<BiomeType, { name: string; icon: React.ReactNode; color: string }> = {
+    62→    62→    forest: { name: 'Зачарованный Лес', icon: <TreePine className="w-3 h-3" />, color: '#44cc66' },
+    63→    63→    desert: { name: 'Кристальная Пустыня', icon: <Gem className="w-3 h-3" />, color: '#ffaa44' },
+    64→    64→    tundra: { name: 'Ледяная Тундра', icon: <Snowflake className="w-3 h-3" />, color: '#88ccff' },
+    65→    65→  };
+    66→    66→
+    67→    67→  const biome = biomeConfig[currentBiome] || biomeConfig.forest;
+    68→    68→  const isLowHp = hpPct < 25;
+    69→    69→  const isLowMana = manaPct < 20;
+    70→    70→
+    71→    71→  return (
+    72→    72→    <motion.div
+    73→    73→      initial={{ y: 40, opacity: 0 }}
+    74→    74→      animate={{ y: 0, opacity: 1 }}
+    75→    75→      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    76→    76→      className="absolute bottom-4 left-1/2 -translate-x-1/2"
+    77→    77→    >
+    78→    78→      <div className="relative">
+    79→    79→        {/* Main frosted panel */}
+    80→    80→        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-5 pt-4 pb-3 min-w-[320px] sm:min-w-[380px]">
+    81→    81→          {/* Player name + Level badge */}
+    82→    82→          <div className="flex items-center justify-between mb-3">
+    83→    83→            <div className="flex items-center gap-2">
+    84→    84→              <div
+    85→    85→                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border"
+    86→    86→                style={{
+    87→    87→                  borderColor: ELEMENT_COLORS[currentElement],
+    88→    88→                  backgroundColor: `${ELEMENT_COLORS[currentElement]}20`,
+    89→    89→                  color: ELEMENT_COLORS[currentElement],
+    90→    90→                  boxShadow: `0 0 12px ${ELEMENT_COLORS[currentElement]}30`,
+    91→    91→                }}
+    92→    92→              >
+    93→    93→                {stats.level}
+    94→    94→              </div>
+    95→    95→              <div>
+    96→    96→                <p className="text-white/90 text-sm font-semibold leading-tight tracking-wide">
+    97→    97→                  {playerName || 'Путник'}
+    98→    98→                </p>
+    99→    99→                <div className="flex items-center gap-1.5 mt-0.5">
+   100→   100→                  <span style={{ color: biome.color }}>{biome.icon}</span>
+   101→   101→                  <span className="text-white/40 text-[10px] font-medium">{biome.name}</span>
+   102→   102→                </div>
+   103→   103→              </div>
+   104→   104→            </div>
+   105→   105→            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+   106→   106→              <span className="text-[10px]">{ELEMENT_ICONS[currentElement]}</span>
+   107→   107→              <span
+   108→   108→                className="text-[10px] font-medium"
+   109→   109→                style={{ color: ELEMENT_COLORS[currentElement] }}
+   110→   110→              >
+   111→   111→                {ELEMENT_NAMES[currentElement]}
+   112→   112→              </span>
+   113→   113→            </div>
+   114→   114→          </div>
+   115→   115→
+   116→   116→          {/* HP Bar */}
+   117→   117→          <div className="mb-2">
+   118→   118→            <div className="flex items-center justify-between mb-1">
+   119→   119→              <div className="flex items-center gap-1.5">
+   120→   120→                <Heart
+   121→   121→                  className={`w-3.5 h-3.5 transition-colors duration-300 ${
+   122→   122→                    isLowHp ? 'text-red-400' : 'text-pink-400'
+   123→   123→                  }`}
+   124→   124→                />
+   125→   125→                <span
+   126→   126→                  className={`text-[11px] font-bold tracking-wider uppercase ${
+   127→   127→                    isLowHp ? 'text-red-400' : 'text-white/70'
+   128→   128→                  }`}
+   129→   129→                >
+   130→   130→                  HP
+   131→   131→                </span>
+   132→   132→              </div>
+   133→   133→              <span
+   134→   134→                className={`text-[11px] font-mono tabular-nums ${
+   135→   135→                  isLowHp ? 'text-red-400' : 'text-white/50'
+   136→   136→                }`}
+   137→   137→              >
+   138→   138→                {Math.round(stats.hp)} / {Math.round(stats.maxHp)}
+   139→   139→              </span>
+   140→   140→            </div>
+   141→   141→            <div className="relative h-4 rounded-full overflow-hidden bg-black/60 border border-white/5">
+   142→   142→              {/* Glow underlay */}
+   143→   143→              <div
+   144→   144→                className="absolute inset-0 rounded-full opacity-40 blur-sm transition-opacity duration-500"
+   145→   145→                style={{
+   146→   146→                  background: `linear-gradient(90deg, #ff2244, #ff6688, #ff4466)`,
+   147→   147→                  transform: `scaleX(${hpPct / 100})`,
+   148→   148→                  transformOrigin: 'left',
+   149→   149→                }}
+   150→   150→              />
+   151→   151→              {/* Main bar */}
+   152→   152→              <motion.div
+   153→   153→                className="absolute inset-y-0 left-0 rounded-full"
+   154→   154→                style={{
+   155→   155→                  background: 'linear-gradient(90deg, #ff2244 0%, #ff6688 50%, #ff4466 100%)',
+   156→   156→                }}
+   157→   157→                animate={{ width: `${hpPct}%` }}
+   158→   158→                transition={{ duration: 0.4, ease: 'easeOut' }}
+   159→   159→              />
+   160→   160→              {/* Shine overlay */}
+   161→   161→              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+   162→   162→              {/* Tick marks */}
+   163→   163→              <div className="absolute inset-0 flex items-center">
+   164→   164→                {[25, 50, 75].map((mark) => (
+   165→   165→                  <div
+   166→   166→                    key={mark}
+   167→   167→                    className="absolute h-full w-px bg-white/10"
+   168→   168→                    style={{ left: `${mark}%` }}
+   169→   169→                  />
+   170→   170→                ))}
+   171→   171→              </div>
+   172→   172→            </div>
+   173→   173→          </div>
+   174→   174→
+   175→   175→          {/* Mana Bar */}
+   176→   176→          <div className="mb-2">
+   177→   177→            <div className="flex items-center justify-between mb-1">
+   178→   178→              <div className="flex items-center gap-1.5">
+   179→   179→                <Droplets
+   180→   180→                  className={`w-3.5 h-3.5 transition-colors duration-300 ${
+   181→   181→                    isLowMana ? 'text-cyan-300 animate-pulse' : 'text-cyan-400'
+   182→   182→                  }`}
+   183→   183→                />
+   184→   184→                <span
+   185→   185→                  className={`text-[11px] font-bold tracking-wider uppercase ${
+   186→   186→                    isLowMana ? 'text-cyan-300' : 'text-white/70'
+   187→   187→                  }`}
+   188→   188→                >
+   189→   189→                  МАНА
+   190→   190→                </span>
+   191→   191→              </div>
+   192→   192→              <span className="text-[11px] font-mono tabular-nums text-white/50">
+   193→   193→                {Math.round(stats.mana)} / {Math.round(stats.maxMana)}
+   194→   194→              </span>
+   195→   195→            </div>
+   196→   196→            <div className="relative h-3 rounded-full overflow-hidden bg-black/60 border border-white/5">
+   197→   197→              {/* Glow underlay */}
+   198→   198→              <div
+   199→   199→                className="absolute inset-0 rounded-full opacity-30 blur-sm transition-opacity duration-500"
+   200→   200→                style={{
+   201→   201→                  background: 'linear-gradient(90deg, #22aaff, #66ccff, #4488ff)',
+   202→   202→                  transform: `scaleX(${manaPct / 100})`,
+   203→   203→                  transformOrigin: 'left',
+   204→   204→                }}
+   205→   205→              />
+   206→   206→              {/* Main bar */}
+   207→   207→              <motion.div
+   208→   208→                className="absolute inset-y-0 left-0 rounded-full"
+   209→   209→                style={{
+   210→   210→                  background: 'linear-gradient(90deg, #22aaff 0%, #66ccff 50%, #4488ff 100%)',
+   211→   211→                }}
+   212→   212→                animate={{ width: `${manaPct}%` }}
+   213→   213→                transition={{ duration: 0.4, ease: 'easeOut' }}
+   214→   214→              />
+   215→   215→              {/* Shine overlay */}
+   216→   216→              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+   217→   217→            </div>
+   218→   218→          </div>
+   219→   219→
+   220→   220→          {/* Stamina + EXP row */}
+   221→   221→          <div className="flex items-center gap-3">
+   222→   222→            {/* Stamina bar (thin) */}
+   223→   223→            <div className="flex-1">
+   224→   224→              <div className="flex items-center justify-between mb-0.5">
+   225→   225→                <div className="flex items-center gap-1">
+   226→   226→                  <Zap className="w-3 h-3 text-yellow-400" />
+   227→   227→                  <span className="text-[10px] text-white/50 font-medium">СТАМИНА</span>
+   228→   228→                </div>
+   229→   229→                <span className="text-[10px] font-mono text-white/40 tabular-nums">
+   230→   230→                  {Math.round(stats.stamina)}
+   231→   231→                </span>
+   232→   232→              </div>
+   233→   233→              <div className="relative h-1.5 rounded-full overflow-hidden bg-black/60 border border-white/5">
+   234→   234→                <motion.div
+   235→   235→                  className="absolute inset-y-0 left-0 rounded-full"
+   236→   236→                  style={{
+   237→   237→                    background:
+   238→   238→                      'linear-gradient(90deg, #ffaa00 0%, #ccff44 50%, #88ff22 100%)',
+   239→   239→                  }}
+   240→   240→                  animate={{ width: `${staminaPct}%` }}
+   241→   241→                  transition={{ duration: 0.3, ease: 'easeOut' }}
+   242→   242→                />
+   243→   243→              </div>
+   244→   244→            </div>
+   245→   245→
+   246→   246→            {/* EXP bar */}
+   247→   247→            <div className="flex-1">
+   248→   248→              <div className="flex items-center justify-between mb-0.5">
+   249→   249→                <span className="text-[10px] text-white/50 font-medium">EXP</span>
+   250→   250→                <span className="text-[10px] font-mono text-white/40 tabular-nums">
+   251→   251→                  {stats.exp}/{stats.expToNext}
+   252→   252→                </span>
+   253→   253→              </div>
+   254→   254→              <div className="relative h-1.5 rounded-full overflow-hidden bg-black/60 border border-white/5">
+   255→   255→                <motion.div
+   256→   256→                  className="absolute inset-y-0 left-0 rounded-full"
+   257→   257→                  style={{
+   258→   258→                    background:
+   259→   259→                      'linear-gradient(90deg, #aa44ff 0%, #ff66aa 50%, #cc44ff 100%)',
+   260→   260→                  }}
+   261→   261→                  animate={{ width: `${expPct}%` }}
+   262→   262→                  transition={{ duration: 0.5, ease: 'easeOut' }}
+   263→   263→                />
+   264→   264→              </div>
+   265→   265→            </div>
+   266→   266→          </div>
+   267→   267→        </div>
+   268→   268→
+   269→   269→        {/* Decorative corner accents */}
+   270→   270→        <div className="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+   271→   271→      </div>
+   272→   272→    </motion.div>
+   273→   273→  );
+   274→   274→});
+   275→   275→
+   276→   276→// ============================================
+   277→   277→// 2. BOTTOM RIGHT — SKILL BAR
+   278→   278→// ============================================
+   279→   279→
+   280→   280→const ELEMENTS: ElementType[] = ['fire', 'ice', 'lightning', 'wind', 'earth'];
+   281→   281→
+   282→   282→const BottomRightSkillBar = memo(function BottomRightSkillBar() {
+   283→   283→  const currentElement = useGameStore((s) => s.currentElement);
+   284→   284→  const unlockedElements = useGameStore((s) => s.unlockedElements);
+   285→   285→  const stats = useGameStore((s) => s.stats);
+   286→   286→  const lastMagicTime = useGameStore((s) => s.lastMagicTime);
+   287→   287→  const lastMeleeTime = useGameStore((s) => s.lastMeleeTime);
+   288→   288→  const lastHealTime = useGameStore((s) => s.lastHealTime);
+   289→   289→  const lastDodgeTime = useGameStore((s) => s.lastDodgeTime);
+   290→   290→  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+   291→   291→
+   292→   292→  // Track cooldowns
+   293→   293→  useEffect(() => {
+   294→   294→    const interval = setInterval(() => {
+   295→   295→      const now = Date.now();
+   296→   296→      const newCooldowns: Record<string, number> = {};
+   297→   297→      ELEMENTS.forEach((el) => {
+   298→   298→        const cd = Math.max(0, 600 - (now - lastMagicTime)) / 600;
+   299→   299→        if (cd > 0) newCooldowns[el] = cd;
+   300→   300→      });
+   301→   301→      newCooldowns['melee'] = Math.max(0, 400 - (now - lastMeleeTime)) / 400;
+   302→   302→      newCooldowns['heal'] = Math.max(0, 2000 - (now - lastHealTime)) / 2000;
+   303→   303→      newCooldowns['dodge'] = Math.max(0, 500 - (now - lastDodgeTime)) / 500;
+   304→   304→      setCooldowns(newCooldowns);
+   305→   305→    }, 30);
+   306→   306→    return () => clearInterval(interval);
+   307→   307→  }, [lastMagicTime, lastMeleeTime, lastHealTime, lastDodgeTime]);
+   308→   308→
+   309→   309→  const handleElementClick = useCallback((element: ElementType) => {
+   310→   310→    if (unlockedElements.includes(element)) {
+   311→   311→      useGameStore.getState().setCurrentElement(element);
+   312→   312→    }
+   313→   313→  }, [unlockedElements]);
+   314→   314→
+   315→   315→  return (
+   316→   316→    <motion.div
+   317→   317→      initial={{ x: 40, opacity: 0 }}
+   318→   318→      animate={{ x: 0, opacity: 1 }}
+   319→   319→      transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+   320→   320→      className="absolute bottom-4 right-4"
+   321→   321→    >
+   322→   322→      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-2.5">
+   323→   323→        {/* Element skills row */}
+   324→   324→        <div className="flex items-end gap-1.5">
+   325→   325→          {ELEMENTS.map((element, i) => {
+   326→   326→            const isUnlocked = unlockedElements.includes(element);
+   327→   327→            const isActive = currentElement === element;
+   328→   328→            const cd = cooldowns[element] || 0;
+   329→   329→            const manaCost = MANA_COSTS.magicBolt;
+   330→   330→            const canAfford = stats.mana >= manaCost;
+   331→   331→
+   332→   332→            return (
+   333→   333→              <motion.button
+   334→   334→                key={element}
+   335→   335→                onClick={() => handleElementClick(element)}
+   336→   336→                className="pointer-events-auto relative flex flex-col items-center gap-0.5 group"
+   337→   337→                whileHover={isUnlocked ? { scale: 1.08, y: -2 } : {}}
+   338→   338→                whileTap={isUnlocked ? { scale: 0.95 } : {}}
+   339→   339→                disabled={!isUnlocked}
+   340→   340→              >
+   341→   341→                {/* Skill slot */}
+   342→   342→                <div
+   343→   343→                  className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl overflow-hidden transition-all duration-200"
+   344→   344→                  style={{
+   345→   345→                    backgroundColor: isActive ? `${ELEMENT_COLORS[element]}18` : 'rgba(0,0,0,0.5)',
+   346→   346→                    border: isActive
+   347→   347→                      ? `2px solid ${ELEMENT_COLORS[element]}`
+   348→   348→                      : `1px solid ${isUnlocked ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)'}`,
+   349→   349→                    boxShadow: isActive
+   350→   350→                      ? `0 0 20px ${ELEMENT_COLORS[element]}40, inset 0 0 15px ${ELEMENT_COLORS[element]}15`
+   351→   351→                      : isUnlocked
+   352→   352→                      ? '0 2px 8px rgba(0,0,0,0.3)'
+   353→   353→                      : 'none',
+   354→   354→                    opacity: isUnlocked ? 1 : 0.25,
+   355→   355→                  }}
+   356→   356→                >
+   357→   357→                  {/* Element icon */}
+   358→   358→                  <span className="relative z-10 drop-shadow-lg">{ELEMENT_ICONS[element]}</span>
+   359→   359→
+   360→   360→                  {/* Cooldown sweep overlay */}
+   361→   361→                  <AnimatePresence>
+   362→   362→                    {cd > 0 && (
+   363→   363→                      <motion.div
+   364→   364→                        initial={{ opacity: 0.8 }}
+   365→   365→                        animate={{ opacity: 0.6 }}
+   366→   366→                        exit={{ opacity: 0 }}
+   367→   367→                        className="absolute inset-0 bg-black/60 z-20"
+   368→   368→                        style={{
+   369→   369→                          clipPath: `polygon(0 0, 0 100%, ${cd * 100}% 100%, ${cd * 100}% 0)`,
+   370→   370→                        }}
+   371→   371→                      >
+   372→   372→                        <div className="w-full h-full flex items-center justify-center">
+   373→   373→                          <span className="text-white/70 text-xs font-mono font-bold">
+   374→   374→                            {Math.ceil(cd * 0.6 * 10) / 10}s
+   375→   375→                          </span>
+   376→   376→                        </div>
+   377→   377→                      </motion.div>
+   378→   378→                    )}
+   379→   379→                  </AnimatePresence>
+   380→   380→
+   381→   381→                  {/* Active glow ring */}
+   382→   382→                  {isActive && (
+   383→   383→                    <motion.div
+   384→   384→                      layoutId="active-element-glow"
+   385→   385→                      className="absolute -inset-0.5 rounded-xl z-0"
+   386→   386→                      style={{
+   387→   387→                        border: `1px solid ${ELEMENT_COLORS[element]}60`,
+   388→   388→                      }}
+   389→   389→                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+   390→   390→                    />
+   391→   391→                  )}
+   392→   392→                </div>
+   393→   393→
+   394→   394→                {/* Key binding */}
+   395→   395→                <span className="text-[9px] font-mono text-white/30 group-hover:text-white/50 transition-colors">
+   396→   396→                  {i + 1}
+   397→   397→                </span>
+   398→   398→
+   399→   399→                {/* Mana cost indicator */}
+   400→   400→                {isUnlocked && (
+   401→   401→                  <span
+   402→   402→                    className={`text-[8px] font-mono transition-colors ${
+   403→   403→                      canAfford ? 'text-cyan-400/60' : 'text-red-400/60'
+   404→   404→                    }`}
+   405→   405→                  >
+   406→   406→                    {manaCost}
+   407→   407→                  </span>
+   408→   408→                )}
+   409→   409→              </motion.button>
+   410→   410→            );
+   411→   411→          })}
+   412→   412→        </div>
+   413→   413→
+   414→   414→        {/* Active element name */}
+   415→   415→        <motion.div
+   416→   416→          key={currentElement}
+   417→   417→          initial={{ opacity: 0, y: -4 }}
+   418→   418→          animate={{ opacity: 1, y: 0 }}
+   419→   419→          className="text-center mt-1.5"
+   420→   420→        >
+   421→   421→          <span
+   422→   422→            className="text-[10px] font-semibold tracking-widest uppercase"
+   423→   423→            style={{ color: `${ELEMENT_COLORS[currentElement]}cc` }}
+   424→   424→          >
+   425→   425→            {ELEMENT_NAMES[currentElement]}
+   426→   426→          </span>
+   427→   427→        </motion.div>
+   428→   428→      </div>
+   429→   429→    </motion.div>
+   430→   430→  );
+   431→   431→});
+   432→   432→
+   433→   433→// ============================================
+   434→   434→// 3. TOP RIGHT — MINIMAP
+   435→   435→// ============================================
+   436→   436→
+   437→   437→const MINIMAP_SIZE = 140;
+   438→   438→const MINIMAP_RANGE = 80;
+   439→   439→
+   440→   440→const TopRightMinimap = memo(function TopRightMinimap() {
+   441→   441→  const playerPosition = useGameStore((s) => s.playerPosition);
+   442→   442→  const npcStates = useGameStore((s) => s.npcStates);
+   443→   443→  const currentBiome = useGameStore((s) => s.currentBiome);
+   444→   444→
+   445→   445→  const halfSize = MINIMAP_SIZE / 2;
+   446→   446→  const scale = halfSize / MINIMAP_RANGE;
+   447→   447→
+   448→   448→  const toMinimapCoords = (worldX: number, worldZ: number) => {
+   449→   449→    const relX = worldX - playerPosition[0];
+   450→   450→    const relZ = worldZ - playerPosition[2];
+   451→   451→    return {
+   452→   452→      x: halfSize + relX * scale,
+   453→   453→      y: halfSize + relZ * scale,
+   454→   454→    };
+   455→   455→  };
+   456→   456→
+   457→   457→  const biomeColors: Record<BiomeType, string> = {
+   458→   458→    forest: 'rgba(34, 90, 30, 0.5)',
+   459→   459→    desert: 'rgba(180, 150, 50, 0.5)',
+   460→   460→    tundra: 'rgba(140, 180, 210, 0.5)',
+   461→   461→  };
+   462→   462→
+   463→   463→  const biomeBorders: Record<BiomeType, string> = {
+   464→   464→    forest: 'rgba(34, 120, 30, 0.3)',
+   465→   465→    desert: 'rgba(200, 170, 60, 0.3)',
+   466→   466→    tundra: 'rgba(120, 160, 200, 0.3)',
+   467→   467→  };
+   468→   468→
+   469→   469→  // Determine NPC visibility on minimap
+   470→   470→  const visibleNpcs = npcStates.filter((npc) => {
+   471→   471→    if (!npc.isAlive) return false;
+   472→   472→    const dx = npc.position[0] - playerPosition[0];
+   473→   473→    const dz = npc.position[2] - playerPosition[2];
+   474→   474→    return Math.sqrt(dx * dx + dz * dz) < MINIMAP_RANGE;
+   475→   475→  });
+   476→   476→
+   477→   477→  return (
+   478→   478→    <motion.div
+   479→   479→      initial={{ x: 40, opacity: 0, scale: 0.8 }}
+   480→   480→      animate={{ x: 0, opacity: 1, scale: 1 }}
+   481→   481→      transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+   482→   482→      className="absolute top-4 right-4"
+   483→   483→    >
+   484→   484→      <div className="relative">
+   485→   485→        {/* Circular mask */}
+   486→   486→        <div
+   487→   487→          className="rounded-full overflow-hidden border-2 border-white/10"
+   488→   488→          style={{
+   489→   489→            width: MINIMAP_SIZE,
+   490→   490→            height: MINIMAP_SIZE,
+   491→   491→            boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3)',
+   492→   492→          }}
+   493→   493→        >
+   494→   494→          <svg
+   495→   495→            width={MINIMAP_SIZE}
+   496→   496→            height={MINIMAP_SIZE}
+   497→   497→            viewBox={`0 0 ${MINIMAP_SIZE} ${MINIMAP_SIZE}`}
+   498→   498→            className="absolute inset-0"
+   499→   499→          >
+   500→   500→            {/* Dark background */}
+   501→   501→            <rect
+   502→   502→              width={MINIMAP_SIZE}
+   503→   503→              height={MINIMAP_SIZE}
+   504→   504→              fill="rgba(0,0,0,0.7)"
+   505→   505→            />
+   506→   506→
+   507→   507→            {/* Biome zones */}
+   508→   508→            {BIOME_ZONES.map((zone) => {
+   509→   509→              const { x, y } = toMinimapCoords(zone.center[0], zone.center[1]);
+   510→   510→              const r = zone.radius * scale;
+   511→   511→              return (
+   512→   512→                <g key={zone.biome}>
+   513→   513→                  <circle
+   514→   514→                    cx={x}
+   515→   515→                    cy={y}
+   516→   516→                    r={r}
+   517→   517→                    fill={biomeColors[zone.biome]}
+   518→   518→                    stroke={biomeBorders[zone.biome]}
+   519→   519→                    strokeWidth={1}
+   520→   520→                  />
+   521→   521→                </g>
+   522→   522→              );
+   523→   523→            })}
+   524→   524→
+   525→   525→            {/* Grid lines (subtle) */}
+   526→   526→            {[0.25, 0.5, 0.75].map((frac) => (
+   527→   527→              <g key={frac}>
+   528→   528→                <line
+   529→   529→                  x1={MINIMAP_SIZE * frac}
+   530→   530→                  y1={0}
+   531→   531→                  x2={MINIMAP_SIZE * frac}
+   532→   532→                  y2={MINIMAP_SIZE}
+   533→   533→                  stroke="rgba(255,255,255,0.04)"
+   534→   534→                  strokeWidth={0.5}
+   535→   535→                />
+   536→   536→                <line
+   537→   537→                  x1={0}
+   538→   538→                  y1={MINIMAP_SIZE * frac}
+   539→   539→                  x2={MINIMAP_SIZE}
+   540→   540→                  y2={MINIMAP_SIZE * frac}
+   541→   541→                  stroke="rgba(255,255,255,0.04)"
+   542→   542→                  strokeWidth={0.5}
+   543→   543→                />
+   544→   544→              </g>
+   545→   545→            ))}
+   546→   546→
+   547→   547→            {/* NPC dots */}
+   548→   548→            {visibleNpcs.map((npc) => {
+   549→   549→              const { x, y } = toMinimapCoords(npc.position[0], npc.position[2]);
+   550→   550→              const color = npc.isHostile ? '#ff4444' : '#44ff88';
+   551→   551→              const r = npc.isHostile ? 3 : 2.5;
+   552→   552→              return (
+   553→   553→                <circle
+   554→   554→                  key={npc.id}
+   555→   555→                  cx={x}
+   556→   556→                  cy={y}
+   557→   557→                  r={r}
+   558→   558→                  fill={color}
+   559→   559→                  opacity={0.9}
+   560→   560→                  style={{ filter: `drop-shadow(0 0 3px ${color})` }}
+   561→   561→                />
+   562→   562→              );
+   563→   563→            })}
+   564→   564→
+   565→   565→            {/* Player center dot */}
+   566→   566→            <circle
+   567→   567→              cx={halfSize}
+   568→   568→              cy={halfSize}
+   569→   569→              r={4}
+   570→   570→              fill="#ffffff"
+   571→   571→              opacity={0.9}
+   572→   572→              style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.8))' }}
+   573→   573→            />
+   574→   574→            <circle
+   575→   575→              cx={halfSize}
+   576→   576→              cy={halfSize}
+   577→   577→              r={2}
+   578→   578→              fill={ELEMENT_COLORS[useGameStore.getState().currentElement]}
+   579→   579→            />
+   580→   580→
+   581→   581→            {/* Player direction indicator */}
+   582→   582→            <polygon
+   583→   583→              points={`${halfSize},${halfSize - 8} ${halfSize - 3},${halfSize - 3} ${halfSize + 3},${halfSize - 3}`}
+   584→   584→              fill="white"
+   585→   585→              opacity={0.7}
+   586→   586→              transform={`rotate(${-useGameStore.getState().playerRotation * (180 / Math.PI)}, ${halfSize}, ${halfSize})`}
+   587→   587→            />
+   588→   588→
+   589→   589→            {/* North indicator */}
+   590→   590→            <polygon
+   591→   591→              points={`${halfSize},8 ${halfSize - 4},16 ${halfSize + 4},16`}
+   592→   592→              fill="rgba(255,255,255,0.5)"
+   593→   593→            />
+   594→   594→            <text
+   595→   595→              x={halfSize}
+   596→   596→              y={24}
+   597→   597→              textAnchor="middle"
+   598→   598→              fill="rgba(255,255,255,0.4)"
+   599→   599→              fontSize="7"
+   600→   600→              fontFamily="monospace"
+   601→   601→            >
+   602→   602→              N
+   603→   603→            </text>
+   604→   604→          </svg>
+   605→   605→        </div>
+   606→   606→
+   607→   607→        {/* Outer ring glow */}
+   608→   608→        <div
+   609→   609→          className="absolute -inset-1 rounded-full pointer-events-none"
+   610→   610→          style={{
+   611→   611→            boxShadow: `inset 0 0 20px rgba(0,0,0,0.3), 0 0 15px rgba(0,0,0,0.2)`,
+   612→   612→          }}
+   613→   613→        />
+   614→   614→
+   615→   615→        {/* Biome label */}
+   616→   616→        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+   617→   617→          <span className="text-[9px] text-white/30 font-medium tracking-wider uppercase">
+   618→   618→            {currentBiome === 'forest' ? 'Лес' : currentBiome === 'desert' ? 'Пустыня' : 'Тундра'}
+   619→   619→          </span>
+   620→   620→        </div>
+   621→   621→      </div>
+   622→   622→    </motion.div>
+   623→   623→  );
+   624→   624→});
+   625→   625→
+   626→   626→// ============================================
+   627→   627→// 4. TOP LEFT — QUEST / INTERACTION AREA
+   628→   628→// ============================================
+   629→   629→
+   630→   630→const TopLeftObjective = memo(function TopLeftObjective() {
+   631→   631→  const playerPosition = useGameStore((s) => s.playerPosition);
+   632→   632→  const npcStates = useGameStore((s) => s.npcStates);
+   633→   633→  const isDialogueOpen = useGameStore((s) => s.isDialogueOpen);
+   634→   634→
+   635→   635→  // Find nearest interactable NPC
+   636→   636→  let nearestNpc: typeof npcStates[0] | null = null;
+   637→   637→  let nearestDist = Infinity;
+   638→   638→
+   639→   639→  for (const npc of npcStates) {
+   640→   640→    if (!npc.isAlive || npc.isHostile) continue;
+   641→   641→    const dx = playerPosition[0] - npc.position[0];
+   642→   642→    const dz = playerPosition[2] - npc.position[2];
+   643→   643→    const dist = Math.sqrt(dx * dx + dz * dz);
+   644→   644→    if (dist < 5 && dist < nearestDist) {
+   645→   645→      nearestDist = dist;
+   646→   646→      nearestNpc = npc;
+   647→   647→    }
+   648→   648→  }
+   649→   649→
+   650→   650→  // Also check for lootable/hostile NPCs
+   651→   651→  let nearestHostile: typeof npcStates[0] | null = null;
+   652→   652→  let nearestHostileDist = Infinity;
+   653→   653→  for (const npc of npcStates) {
+   654→   654→    if (!npc.isAlive || !npc.isHostile) continue;
+   655→   655→    const dx = playerPosition[0] - npc.position[0];
+   656→   656→    const dz = playerPosition[2] - npc.position[2];
+   657→   657→    const dist = Math.sqrt(dx * dx + dz * dz);
+   658→   658→    if (dist < 10 && dist < nearestHostileDist) {
+   659→   659→      nearestHostileDist = dist;
+   660→   660→      nearestHostile = npc;
+   661→   661→    }
+   662→   662→  }
+   663→   663→
+   664→   664→  const showInteraction = nearestNpc && !isDialogueOpen;
+   665→   665→  const showHostileWarning = nearestHostile && nearestHostileDist < 6;
+   666→   666→
+   667→   667→  return (
+   668→   668→    <motion.div
+   669→   669→      initial={{ x: -40, opacity: 0 }}
+   670→   670→      animate={{ x: 0, opacity: 1 }}
+   671→   671→      transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+   672→   672→      className="absolute top-4 left-4 max-w-xs"
+   673→   673→    >
+   674→   674→      <div className="space-y-2">
+   675→   675→        {/* Current objective placeholder */}
+   676→   676→        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2.5">
+   677→   677→          <div className="flex items-center gap-2 mb-1">
+   678→   678→            <Compass className="w-3.5 h-3.5 text-purple-400" />
+   679→   679→            <span className="text-[10px] font-bold text-purple-300/80 tracking-widest uppercase">
+   680→   680→              Задание
+   681→   681→            </span>
+   682→   682→          </div>
+   683→   683→          <p className="text-white/60 text-xs leading-relaxed">
+   684→   684→            Исследуй мир Эфирной Саги и найди Алтарь Стихий
+   685→   685→          </p>
+   686→   686→        </div>
+   687→   687→
+   688→   688→        {/* Interaction prompt */}
+   689→   689→        <AnimatePresence mode="wait">
+   690→   690→          {showInteraction && nearestNpc && (
+   691→   691→            <motion.div
+   692→   692→              key={`interact-${nearestNpc.id}`}
+   693→   693→              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+   694→   694→              animate={{ opacity: 1, y: 0, scale: 1 }}
+   695→   695→              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+   696→   696→              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+   697→   697→              className="bg-black/50 backdrop-blur-xl border border-amber-400/20 rounded-xl px-4 py-2.5"
+   698→   698→              style={{
+   699→   699→                boxShadow: '0 0 20px rgba(255,170,50,0.08)',
+   700→   700→              }}
+   701→   701→            >
+   702→   702→              <div className="flex items-center gap-2">
+   703→   703→                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/20">
+   704→   704→                  <kbd className="text-amber-300 text-xs font-bold font-mono">E</kbd>
+   705→   705→                </div>
+   706→   706→                <p className="text-white/80 text-xs">
+   707→   707→                  {nearestNpc.questId ? 'Подобрать' : 'Говорить'} —{' '}
+   708→   708→                  <span className="text-amber-300/90 font-medium">{nearestNpc.name}</span>
+   709→   709→                </p>
+   710→   710→              </div>
+   711→   711→            </motion.div>
+   712→   712→          )}
+   713→   713→
+   714→   714→          {showHostileWarning && nearestHostile && !showInteraction && (
+   715→   715→            <motion.div
+   716→   716→              key={`hostile-${nearestHostile.id}`}
+   717→   717→              initial={{ opacity: 0, y: -8 }}
+   718→   718→              animate={{ opacity: 1, y: 0 }}
+   719→   719→              exit={{ opacity: 0, y: -8 }}
+   720→   720→              transition={{ duration: 0.25 }}
+   721→   721→              className="bg-black/50 backdrop-blur-xl border border-red-400/20 rounded-xl px-4 py-2"
+   722→   722→            >
+   723→   723→              <div className="flex items-center gap-2">
+   724→   724→                <Swords className="w-3.5 h-3.5 text-red-400" />
+   725→   725→                <span className="text-red-300/80 text-xs font-medium">
+   726→   726→                  {nearestHostile.name}
+   727→   727→                </span>
+   728→   728→                <span className="text-white/30 text-[10px]">
+   729→   729→                  HP {Math.round(nearestHostile.currentHp)}/{nearestHostile.stats?.maxHp || '?'}
+   730→   730→                </span>
+   731→   731→              </div>
+   732→   732→            </motion.div>
+   733→   733→          )}
+   734→   734→        </AnimatePresence>
+   735→   735→      </div>
+   736→   736→    </motion.div>
+   737→   737→  );
+   738→   738→});
+   739→   739→
+   740→   740→// ============================================
+   741→   741→// 5. BOTTOM LEFT — CONTROLS HINT
+   742→   742→// ============================================
+   743→   743→
+   744→   744→const BottomLeftControls = memo(function BottomLeftControls() {
+   745→   745→  const [isExpanded, setIsExpanded] = useState(false);
+   746→   746→  const [isVisible, setIsVisible] = useState(true);
+   747→   747→
+   748→   748→  // F1 toggle
+   749→   749→  useEffect(() => {
+   750→   750→    const handleKey = (e: KeyboardEvent) => {
+   751→   751→      if (e.key === 'F1') {
+   752→   752→        e.preventDefault();
+   753→   753→        setIsVisible((v) => !v);
+   754→   754→        if (isVisible) setIsExpanded(false);
+   755→   755→      }
+   756→   756→    };
+   757→   757→    window.addEventListener('keydown', handleKey);
+   758→   758→    return () => window.removeEventListener('keydown', handleKey);
+   759→   759→  }, [isVisible]);
+   760→   760→
+   761→   761→  const controls = [
+   762→   762→    { key: 'WASD', label: 'Движение' },
+   763→   763→    { key: 'ЛКМ', label: 'Атака' },
+   764→   764→    { key: 'ПКМ', label: 'Магия' },
+   765→   765→    { key: 'Space', label: 'Уклон' },
+   766→   766→    { key: 'E', label: 'Взаимодействие' },
+   767→   767→    { key: 'Q', label: 'Лечение' },
+   768→   768→    { key: '1-5', label: 'Стихия' },
+   769→   769→    { key: 'Tab', label: 'Инвентарь' },
+   770→   770→    { key: 'Esc', label: 'Пауза' },
+   771→   771→    { key: 'F1', label: 'Управление' },
+   772→   772→  ];
+   773→   773→
+   774→   774→  if (!isVisible) return null;
+   775→   775→
+   776→   776→  return (
+   777→   777→    <motion.div
+   778→   778→      initial={{ x: -40, opacity: 0 }}
+   779→   779→      animate={{ x: 0, opacity: 1 }}
+   780→   780→      transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+   781→   781→      className="absolute bottom-4 left-4"
+   782→   782→    >
+   783→   783→      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
+   784→   784→        <button
+   785→   785→          onClick={() => setIsExpanded((v) => !v)}
+   786→   786→          className="pointer-events-auto w-full flex items-center gap-2 px-3 py-2 hover:bg-white/5 transition-colors"
+   787→   787→        >
+   788→   788→          <Keyboard className="w-3.5 h-3.5 text-white/40" />
+   789→   789→          <span className="text-[10px] text-white/40 font-medium">Управление</span>
+   790→   790→          {isExpanded ? (
+   791→   791→            <EyeOff className="w-3 h-3 text-white/30 ml-auto" />
+   792→   792→          ) : (
+   793→   793→            <Eye className="w-3 h-3 text-white/30 ml-auto" />
+   794→   794→          )}
+   795→   795→        </button>
+   796→   796→
+   797→   797→        <AnimatePresence>
+   798→   798→          {isExpanded && (
+   799→   799→            <motion.div
+   800→   800→              initial={{ height: 0, opacity: 0 }}
+   801→   801→              animate={{ height: 'auto', opacity: 1 }}
+   802→   802→              exit={{ height: 0, opacity: 0 }}
+   803→   803→              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+   804→   804→              className="overflow-hidden"
+   805→   805→            >
+   806→   806→              <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-white/5">
+   807→   807→                {controls.map((ctrl) => (
+   808→   808→                  <div key={ctrl.key} className="flex items-center justify-between">
+   809→   809→                    <kbd className="px-1.5 py-0.5 bg-white/8 border border-white/10 rounded text-[10px] text-white/50 font-mono min-w-[36px] text-center">
+   810→   810→                      {ctrl.key}
+   811→   811→                    </kbd>
+   812→   812→                    <span className="text-[10px] text-white/30">{ctrl.label}</span>
+   813→   813→                  </div>
+   814→   814→                ))}
+   815→   815→              </div>
+   816→   816→            </motion.div>
+   817→   817→          )}
+   818→   818→        </AnimatePresence>
+   819→   819→      </div>
+   820→   820→    </motion.div>
+   821→   821→  );
+   822→   822→});
+   823→   823→
+   824→   824→// ============================================
+   825→   825→// 6. COMBAT FEEDBACK — LOW HP WARNING
+   826→   826→// ============================================
+   827→   827→
+   828→   828→function LowHPWarning() {
+   829→   829→  const hp = useGameStore((s) => s.stats.hp);
+   830→   830→  const maxHp = useGameStore((s) => s.stats.maxHp);
+   831→   831→  const isLow = hp / maxHp < 0.25 && hp > 0;
+   832→   832→
+   833→   833→  return (
+   834→   834→    <AnimatePresence>
+   835→   835→      {isLow && (
+   836→   836→        <motion.div
+   837→   837→          initial={{ opacity: 0 }}
+   838→   838→          animate={{ opacity: 1 }}
+   839→   839→          exit={{ opacity: 0 }}
+   840→   840→          transition={{ duration: 0.3 }}
+   841→   841→          className="absolute inset-0 pointer-events-none"
+   842→   842→          style={{ zIndex: 5 }}
+   843→   843→        >
+   844→   844→          {/* Red vignette pulse */}
+   845→   845→          <motion.div
+   846→   846→            className="absolute inset-0"
+   847→   847→            animate={{
+   848→   848→              opacity: [0.15, 0.35, 0.15],
+   849→   849→            }}
+   850→   850→            transition={{
+   851→   851→              duration: 1.5,
+   852→   852→              repeat: Infinity,
+   853→   853→              ease: 'easeInOut',
+   854→   854→            }}
+   855→   855→            style={{
+   856→   856→              boxShadow: 'inset 0 0 120px 40px rgba(255, 20, 20, 0.6)',
+   857→   857→            }}
+   858→   858→          />
+   859→   859→          {/* Additional edge glow */}
+   860→   860→          <motion.div
+   861→   861→            className="absolute inset-0"
+   862→   862→            animate={{
+   863→   863→              opacity: [0.1, 0.25, 0.1],
+   864→   864→            }}
+   865→   865→            transition={{
+   866→   866→              duration: 1.5,
+   867→   867→              repeat: Infinity,
+   868→   868→              ease: 'easeInOut',
+   869→   869→              delay: 0.3,
+   870→   870→            }}
+   871→   871→            style={{
+   872→   872→              boxShadow: 'inset 0 0 60px 10px rgba(255, 0, 0, 0.4)',
+   873→   873→            }}
+   874→   874→          />
+   875→   875→        </motion.div>
+   876→   876→      )}
+   877→   877→    </AnimatePresence>
+   878→   878→  );
+   879→   879→}
+   880→   880→
+   881→   881→// ============================================
+   882→   882→// 6b. COMBAT FEEDBACK — MANA EMPTY FLASH
+   883→   883→// ============================================
+   884→   884→
+   885→   885→function ManaEmptyFlash() {
+   886→   886→  const mana = useGameStore((s) => s.stats.mana);
+   887→   887→  const lastMagicTime = useGameStore((s) => s.lastMagicTime);
+   888→   888→
+   889→   889→  // Show flash when mana is depleted and a magic action was attempted
+   890→   890→  const showFlash = mana <= 0 && lastMagicTime > 0;
+   891→   891→
+   892→   892→  return (
+   893→   893→    <AnimatePresence>
+   894→   894→      {showFlash && (
+   895→   895→        <motion.div
+   896→   896→          key={lastMagicTime}
+   897→   897→          initial={{ opacity: 0 }}
+   898→   898→          animate={{ opacity: [0, 0.4, 0] }}
+   899→   899→          transition={{ duration: 0.8, ease: 'easeOut' }}
+   900→   900→          className="absolute inset-0 pointer-events-none"
+   901→   901→          style={{ zIndex: 5 }}
+   902→   902→          >
+   903→   903→          <div
+   904→   904→            className="absolute inset-0"
+   905→   905→            style={{
+   906→   906→              boxShadow: 'inset 0 0 100px 30px rgba(0, 150, 255, 0.4)',
+   907→   907→            }}
+   908→   908→          />
+   909→   909→        </motion.div>
+   910→   910→      )}
+   911→   911→    </AnimatePresence>
+   912→   912→  );
+   913→   913→}

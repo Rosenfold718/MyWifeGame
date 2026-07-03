@@ -1,26 +1,28 @@
 'use client';
 
-import { lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { LoadingScreen } from '@/components/game/LoadingScreen';
 
-// Lazy load the entire game app so the loading screen shows immediately
-const GameApp = lazy(() =>
-  import('@/components/game/GameApp').then((mod) => {
-    // Signal that the game module has loaded
-    if (typeof window !== 'undefined') {
-      const w = window as unknown as Record<string, (() => void) | undefined>;
-      if (w.__gameReady) w.__gameReady();
-    }
-    return { default: mod.GameApp };
-  })
+// Dynamic import with SSR disabled to prevent hydration mismatch from framer-motion
+const GameApp = dynamic(
+  () =>
+    import('@/components/game/GameApp').then((mod) => {
+      if (typeof window !== 'undefined') {
+        const w = window as unknown as Record<string, (() => void) | undefined>;
+        if (w.__gameReady) w.__gameReady();
+      }
+      return { default: mod.GameApp };
+    }),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen />,
+  }
 );
 
 export default function Home() {
   return (
     <div className="w-screen h-screen overflow-hidden bg-black">
-      <Suspense fallback={<LoadingScreen />}>
-        <GameApp />
-      </Suspense>
+      <GameApp />
     </div>
   );
 }

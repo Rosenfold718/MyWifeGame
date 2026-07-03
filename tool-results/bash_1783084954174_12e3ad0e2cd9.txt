@@ -1,0 +1,1308 @@
+$ next dev -p 3000 2>&1 | tee dev.log
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://21.0.15.211:3000
+- Environments: .env
+✓ Ready in 655ms
+
+○ Compiling / ...
+ GET / 200 in 6.6s (next.js: 5.5s, application-code: 1083ms)
+ GET / 200 in 8.2s (next.js: 7.2s, application-code: 993ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="page.tsx">
+      <SegmentTrieNode>
+      <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
+        <Home params={Promise} searchParams={Promise}>
+          <div className="w-screen h...">
+            <Suspense fallback={<LoadingScreen>}>
+              <GameApp>
+                <div className="w-full h-f...">
+                  <MainMenu>
+                    <div style={{width:"100%", ...}} className="jsx-53a206...">
+                      <div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <motion.div>
+                      <FloatingParticle delay={0} x={83.45547742952844} size={5.699360313332684} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "83.45547742952844%"
+-                             left: "74.3077%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.699360313332684
+-                             width: "5.43028px"
++                             height: 5.699360313332684
+-                             height: "5.43028px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={0.35} x={89.40058693538963} size={2.2963501865220146} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "89.40058693538963%"
+-                             left: "98.0422%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 2.2963501865220146
+-                             width: "2.95112px"
++                             height: 2.2963501865220146
+-                             height: "2.95112px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={0.7} x={1.455688563483537} size={6.575436826068827} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "1.455688563483537%"
+-                             left: "31.2312%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.575436826068827
+-                             width: "5.28493px"
++                             height: 6.575436826068827
+-                             height: "5.28493px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={1.0499999999999998} x={85.19429940796603} size={2.215389048908277} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "85.19429940796603%"
+-                             left: "82.9308%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 2.215389048908277
+-                             width: "4.65934px"
++                             height: 2.215389048908277
+-                             height: "4.65934px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={1.4} x={16.949558569774158} size={6.857891847930105} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "16.949558569774158%"
+-                             left: "38.6502%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.857891847930105
+-                             width: "2.62005px"
++                             height: 6.857891847930105
+-                             height: "2.62005px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={1.75} x={62.69035463585101} size={5.389681626669439} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "62.69035463585101%"
+-                             left: "4.12882%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.389681626669439
+-                             width: "5.64939px"
++                             height: 5.389681626669439
+-                             height: "5.64939px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={2.0999999999999996} x={74.54893179848327} size={3.7282392865173963} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "74.54893179848327%"
+-                             left: "38.0732%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.7282392865173963
+-                             width: "6.35608px"
++                             height: 3.7282392865173963
+-                             height: "6.35608px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={2.4499999999999997} x={6.000150238741431} size={6.864082683172497} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "6.000150238741431%"
+-                             left: "20.7527%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.864082683172497
+-                             width: "2.59736px"
++                             height: 6.864082683172497
+-                             height: "2.59736px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={2.8} x={6.2635497282323644} size={5.866414849897178} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "6.2635497282323644%"
+-                             left: "75.6483%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.866414849897178
+-                             width: "4.74707px"
++                             height: 5.866414849897178
+-                             height: "4.74707px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={3.15} x={83.98677641749727} size={2.0206852820048864} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "83.98677641749727%"
+-                             left: "94.2489%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 2.0206852820048864
+-                             width: "4.80798px"
++                             height: 2.0206852820048864
+-                             height: "4.80798px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={3.5} x={55.07452369986778} size={6.723528679044668} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "55.07452369986778%"
+-                             left: "57.5385%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.723528679044668
+-                             width: "3.74781px"
++                             height: 6.723528679044668
+-                             height: "3.74781px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={3.8499999999999996} x={2.5321277232314254} size={4.533009177043308} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "2.5321277232314254%"
+-                             left: "22.2559%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 4.533009177043308
+-                             width: "6.36868px"
++                             height: 4.533009177043308
+-                             height: "6.36868px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={4.199999999999999} x={38.69933894174411} size={3.1247981034166683} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "38.69933894174411%"
+-                             left: "45.1694%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.1247981034166683
+-                             width: "2.09892px"
++                             height: 3.1247981034166683
+-                             height: "2.09892px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={4.55} x={56.621167611574904} size={3.3757424494230652} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "56.621167611574904%"
+-                             left: "82.0495%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.3757424494230652
+-                             width: "4.58475px"
++                             height: 3.3757424494230652
+-                             height: "4.58475px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={4.8999999999999995} x={41.602842332024316} size={5.338200314417414} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "41.602842332024316%"
+-                             left: "46.9781%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.338200314417414
+-                             width: "4.76005px"
++                             height: 5.338200314417414
+-                             height: "4.76005px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={5.25} x={75.75871590777918} size={3.2588330284688194} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "75.75871590777918%"
+-                             left: "0.483941%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.2588330284688194
+-                             width: "5.11657px"
++                             height: 3.2588330284688194
+-                             height: "5.11657px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={5.6} x={83.54537231326591} size={6.577655322236938} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "83.54537231326591%"
+-                             left: "77.4004%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.577655322236938
+-                             width: "6.61819px"
++                             height: 6.577655322236938
+-                             height: "6.61819px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={5.949999999999999} x={83.42350746374933} size={5.05233683254742} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "83.42350746374933%"
+-                             left: "89.5255%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.05233683254742
+-                             width: "4.66539px"
++                             height: 5.05233683254742
+-                             height: "4.66539px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={6.3} x={30.374464101878694} size={5.331374262746539} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "30.374464101878694%"
+-                             left: "54.7139%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.331374262746539
+-                             width: "4.40385px"
++                             height: 5.331374262746539
+-                             height: "4.40385px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={6.6499999999999995} x={64.34628461108373} size={6.501093805525553} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "64.34628461108373%"
+-                             left: "87.4785%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.501093805525553
+-                             width: "4.69587px"
++                             height: 6.501093805525553
+-                             height: "4.69587px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={7} x={41.89464026033106} size={5.7685033553531735} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "41.89464026033106%"
+-                             left: "22.074%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.7685033553531735
+-                             width: "6.9313px"
++                             height: 5.7685033553531735
+-                             height: "6.9313px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={7.35} x={41.987917180651735} size={5.22619240620654} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "41.987917180651735%"
+-                             left: "97.5725%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.22619240620654
+-                             width: "4.17913px"
++                             height: 5.22619240620654
+-                             height: "4.17913px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={7.699999999999999} x={0.06566440488379177} size={5.779227915044755} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "0.06566440488379177%"
+-                             left: "95.7063%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 5.779227915044755
+-                             width: "4.42266px"
++                             height: 5.779227915044755
+-                             height: "4.42266px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={8.049999999999999} x={80.72753066876307} size={6.9278982631364565} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "80.72753066876307%"
+-                             left: "76.3487%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 6.9278982631364565
+-                             width: "3.52291px"
++                             height: 6.9278982631364565
+-                             height: "3.52291px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={8.399999999999999} x={8.650910692713943} size={3.5806298418841314} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "8.650910692713943%"
+-                             left: "46.5223%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.5806298418841314
+-                             width: "2.51168px"
++                             height: 3.5806298418841314
+-                             height: "2.51168px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={8.75} x={10.186222477826956} size={3.0925443541979707} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "10.186222477826956%"
+-                             left: "95.9189%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.0925443541979707
+-                             width: "6.20202px"
++                             height: 3.0925443541979707
+-                             height: "6.20202px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={9.1} x={96.12373266412631} size={4.606323002345198} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "96.12373266412631%"
+-                             left: "82.0913%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 4.606323002345198
+-                             width: "4.46869px"
++                             height: 4.606323002345198
+-                             height: "4.46869px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={9.45} x={94.91762115164875} size={3.1814453833019773} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "94.91762115164875%"
+-                             left: "1.58244%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.1814453833019773
+-                             width: "5.39277px"
++                             height: 3.1814453833019773
+-                             height: "5.39277px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,180,220,0.9), rgba(200,140,255,0.3), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 180, 220, 0.9), rgba(200, 140, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={9.799999999999999} x={36.05117163577526} size={2.7032656839762153} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "36.05117163577526%"
+-                             left: "98.522%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 2.7032656839762153
+-                             width: "6.53678px"
++                             height: 2.7032656839762153
+-                             height: "6.53678px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(126,184,255,0.8), rgba(199,125,255,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(126, 184, 255, 0.8), rgba(199, 125, 255,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      <FloatingParticle delay={10.149999999999999} x={68.85063598247109} size={3.73607874875668} ...>
+                        <motion.div style={{position:"...", ...}} initial={{y:0,opacity:0}} animate={{y:[...], ...}} ...>
+                          <div
+                            style={{
++                             position: "absolute"
+-                             position: "absolute"
++                             left: "68.85063598247109%"
+-                             left: "8.22414%"
++                             bottom: "-3%"
+-                             bottom: "-3%"
++                             width: 3.73607874875668
+-                             width: "5.7674px"
++                             height: 3.73607874875668
+-                             height: "5.7674px"
++                             borderRadius: "50%"
++                             background: "radial-gradient(circle, rgba(255,255,255,0.7), rgba(255,157,226,0.2), trans..."
++                             filter: "blur(1px)"
+-                             filter: "blur(1px)"
++                             pointerEvents: "none"
++                             opacity: 0
+-                             opacity: "0"
++                             transform: "none"
+-                             transform: "none"
+-                             border-top-left-radius: "50%"
+-                             border-top-right-radius: "50%"
+-                             border-bottom-right-radius: "50%"
+-                             border-bottom-left-radius: "50%"
+-                             background-image: "radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 157, 226,..."
+-                             background-position-x: "initial"
+-                             background-position-y: "initial"
+-                             background-size: "initial"
+-                             background-repeat: "initial"
+-                             background-attachment: "initial"
+-                             background-origin: "initial"
+-                             background-clip: "initial"
+-                             background-color: "initial"
+-                             pointer-events: "none"
+                            }}
+                            ref={function useMotionRef.useCallback}
+                          >
+                      ...
+    ...
+ 
+EXIT CODE: 124

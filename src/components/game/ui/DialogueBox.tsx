@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
 
@@ -9,33 +9,48 @@ export function DialogueBox() {
   const dialogueNpcId = useGameStore((s) => s.dialogueNpcId);
   const dialogueLineIndex = useGameStore((s) => s.dialogueLineIndex);
   const npcStates = useGameStore((s) => s.npcStates);
-  const advanceDialogue = useGameStore((s) => s.advanceDialogue);
-  const closeDialogue = useGameStore.getState().closeDialogue;
 
   const npc = npcStates.find((n) => n.id === dialogueNpcId);
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Clear previous interval and reset when dialogue changes
+  const prevKeyRef = useRef(`${dialogueNpcId}-${dialogueLineIndex}`);
   useEffect(() => {
-    if (!npc || !isDialogueOpen) return;
+    const key = `${dialogueNpcId}-${dialogueLineIndex}`;
+    if (key !== prevKeyRef.current) {
+      prevKeyRef.current = key;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      // Reset via microtask to avoid synchronous setState in effect
+      queueMicrotask(() => {
+        setDisplayedText('');
+        setIsTyping(true);
+      });
+    }
+  }, [dialogueNpcId, dialogueLineIndex]);
+
+  // Typewriter effect — runs in interval callback, not synchronously
+  useEffect(() => {
+    if (!npc || !isDialogueOpen || !isTyping) return;
 
     const fullText = npc.dialogue[dialogueLineIndex] || '';
-    setDisplayedText('');
-    setIsTyping(true);
-
     let index = 0;
-    const interval = setInterval(() => {
+
+    intervalRef.current = setInterval(() => {
       if (index < fullText.length) {
         setDisplayedText(fullText.slice(0, index + 1));
         index++;
       } else {
         setIsTyping(false);
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
       }
     }, 30);
 
-    return () => clearInterval(interval);
-  }, [npc, dialogueLineIndex, isDialogueOpen]);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [npc, dialogueLineIndex, isDialogueOpen, isTyping]);
 
   if (!isDialogueOpen || !npc) return null;
 
@@ -44,51 +59,167 @@ export function DialogueBox() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
+        initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="absolute bottom-8 left-8 right-8 max-w-3xl mx-auto pointer-events-auto"
+        exit={{ y: 80, opacity: 0 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          left: 24,
+          right: 24,
+          maxWidth: 700,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          pointerEvents: 'auto',
+          fontFamily: 'var(--font-ui)',
+          zIndex: 20,
+        }}
       >
-        <div
-          className="relative rounded-2xl p-1.5"
-          style={{
-            background: 'linear-gradient(135deg, rgba(100,50,150,0.6), rgba(50,50,100,0.6))',
-            border: '1px solid rgba(200,150,255,0.2)',
-          }}
-        >
-          <div className="bg-black/60 backdrop-blur-md rounded-xl p-5">
+        {/* Outer ornamental border */}
+        <div style={{
+          position: 'relative',
+          background: 'rgba(10, 0, 21, 0.88)',
+          border: '1px solid rgba(199,125,255,0.2)',
+          borderRadius: 2,
+          padding: 1,
+          boxShadow: '0 0 30px rgba(199,125,255,0.08), inset 0 0 30px rgba(0,0,0,0.3)',
+        }}>
+          {/* Inner border accent */}
+          <div style={{
+            border: '1px solid rgba(199,125,255,0.06)',
+            borderRadius: 1,
+            padding: '16px 20px',
+          }}>
+            {/* Corner ornaments */}
+            <div style={{
+              position: 'absolute',
+              top: -1,
+              left: -1,
+              width: 14,
+              height: 14,
+              borderTop: `2px solid ${npc.color}80`,
+              borderLeft: `2px solid ${npc.color}80`,
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              top: -1,
+              right: -1,
+              width: 14,
+              height: 14,
+              borderTop: `2px solid ${npc.color}80`,
+              borderRight: `2px solid ${npc.color}80`,
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: -1,
+              left: -1,
+              width: 14,
+              height: 14,
+              borderBottom: `2px solid ${npc.color}80`,
+              borderLeft: `2px solid ${npc.color}80`,
+              pointerEvents: 'none',
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: -1,
+              right: -1,
+              width: 14,
+              height: 14,
+              borderBottom: `2px solid ${npc.color}80`,
+              borderRight: `2px solid ${npc.color}80`,
+              pointerEvents: 'none',
+            }} />
+
             {/* NPC name */}
-            <div className="flex items-center gap-2 mb-3">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                style={{ backgroundColor: npc.color + '40', border: `2px solid ${npc.color}` }}
-              >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: 10,
+              paddingBottom: 8,
+              borderBottom: '1px solid rgba(199,125,255,0.08)',
+            }}>
+              {/* Avatar placeholder */}
+              <div style={{
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `${npc.color}15`,
+                border: `1px solid ${npc.color}60`,
+                borderRadius: 2,
+                fontSize: 16,
+                boxShadow: `0 0 10px ${npc.color}15`,
+              }}>
                 {npc.type === 'human' ? '👤' : '🐾'}
               </div>
-              <h3 className="text-white font-bold text-lg">{npc.name}</h3>
+              <h3 style={{
+                fontSize: 15,
+                fontWeight: 600,
+                color: npc.color,
+                letterSpacing: '0.05em',
+                textShadow: `0 0 10px ${npc.color}30`,
+              }}>
+                {npc.name}
+              </h3>
             </div>
 
             {/* Dialogue text */}
-            <p className="text-white/90 text-base leading-relaxed min-h-[3rem]">
+            <p style={{
+              fontSize: 14,
+              color: 'rgba(240, 230, 255, 0.85)',
+              lineHeight: 1.7,
+              minHeight: 48,
+              textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+              letterSpacing: '0.01em',
+            }}>
               {displayedText}
               {isTyping && (
-                <span className="inline-block w-0.5 h-5 bg-purple-300 ml-1 animate-pulse" />
+                <span style={{
+                  display: 'inline-block',
+                  width: 2,
+                  height: 16,
+                  background: 'rgba(199,125,255,0.6)',
+                  marginLeft: 2,
+                  verticalAlign: 'text-bottom',
+                  animation: 'cursorBlink 0.8s ease infinite',
+                }} />
               )}
             </p>
 
-            {/* Continue hint */}
+            {/* Continue prompt */}
             {!isTyping && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-purple-300/50 text-xs mt-3 text-right"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginTop: 8,
+                }}
               >
-                {isLastLine ? '[E] Закрыть' : '[E] Продолжить'}
-              </motion.p>
+                <span style={{
+                  fontSize: 10,
+                  color: 'rgba(199,125,255,0.4)',
+                  letterSpacing: '0.1em',
+                }}>
+                  [{isLastLine ? 'E' : 'E / Enter'}] {isLastLine ? 'Закрыть' : 'Продолжить'}
+                </span>
+              </motion.div>
             )}
           </div>
         </div>
+
+        <style jsx>{`
+          @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+          }
+        `}</style>
       </motion.div>
     </AnimatePresence>
   );

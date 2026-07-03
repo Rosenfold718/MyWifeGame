@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo, useEffect, useState, useCallback } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '@/stores/gameStore';
@@ -10,9 +10,9 @@ import { EnvironmentObjects } from './EnvironmentObjects';
 import { NPCs } from '../npc/NPCs';
 import { Projectiles } from '../combat/Projectiles';
 import { DamageNumbers } from '../combat/DamageNumbers';
-import { SpellTrail, HitExplosion, DodgeTrail, HealEffect, ElementAura } from '../effects/ParticleEffects';
-import { BIOME_ZONES } from '@/lib/game/constants';
-import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
+import { HitExplosion, DodgeTrail, HealEffect, ElementAura } from '../effects/ParticleEffects';
+import { getTerrainHeight } from '@/lib/game/noise';
+import { sharedGradientMap } from '@/lib/game/toonMaterial';
 import { Sky } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 
@@ -68,8 +68,8 @@ function CameraController() {
     };
   }, [gl]);
 
-  useFrame(({ camera }) => {
-    const dt = Math.min(delta, 0.05);
+  useFrame(({ camera }, rawDelta) => {
+    const dt = Math.min(rawDelta, 0.05);
 
     const px = playerPosition[0];
     const py = playerPosition[1];
@@ -136,7 +136,7 @@ function CameraController() {
 function SceneSetup() {
   useFrame(({ scene }) => {
     if (!scene.fog) {
-      scene.fog = new THREE.FogExp2(0x1a0a2e, 0.003);
+      scene.fog = new THREE.FogExp2(0x1a0a2e, 0.0018);
     }
     const biome = useGameStore.getState().currentBiome;
     const targetColor = new THREE.Color(
@@ -152,10 +152,13 @@ function SceneSetup() {
 }
 
 // ============================================
-// DYNAMIC LIGHTING
+// DYNAMIC LIGHTING (improved: blue fill + player light)
 // ============================================
 function Lighting() {
   const lightRef = useRef<THREE.DirectionalLight>(null);
+  const playerLightRef = useRef<THREE.PointLight>(null);
+
+  const playerPosition = useGameStore((s) => s.playerPosition);
 
   useFrame(() => {
     if (!lightRef.current) return;
@@ -168,11 +171,16 @@ function Lighting() {
     const t = targets[biome];
     lightRef.current.color.lerp(t.color, 0.02);
     lightRef.current.intensity += (t.intensity - lightRef.current.intensity) * 0.02;
+
+    // Player-following point light for better visibility
+    if (playerLightRef.current) {
+      playerLightRef.current.position.set(playerPosition[0], playerPosition[1] + 3, playerPosition[2]);
+    }
   });
 
   return (
     <>
-      <ambientLight intensity={0.4} color="#b8a0d8" />
+      <ambientLight intensity={0.5} color="#c8b0e8" />
       <directionalLight
         ref={lightRef}
         position={[50, 80, 30]}
@@ -186,7 +194,21 @@ function Lighting() {
         shadow-camera-top={100}
         shadow-camera-bottom={-100}
       />
-      <hemisphereLight groundColor="#443344" skyColor="#8888cc" intensity={0.3} />
+      {/* Blue fill light from opposite side */}
+      <directionalLight
+        position={[-40, 60, -30]}
+        intensity={0.3}
+        color="#6688cc"
+      />
+      <hemisphereLight groundColor="#443344" skyColor="#8888cc" intensity={0.35} />
+      {/* Player-following point light */}
+      <pointLight
+        ref={playerLightRef}
+        intensity={0.6}
+        distance={15}
+        color="#ffffff"
+        position={[0, 3, 0]}
+      />
     </>
   );
 }
@@ -388,6 +410,32 @@ function PlayerEffects() {
 }
 
 // ============================================
+// WATER PLANE (global water level)
+// ============================================
+function WaterPlane() {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  const waterMat = useMemo(() => new THREE.MeshToonMaterial({
+    color: '#2266aa',
+    transparent: true,
+    opacity: 0.45,
+    gradientMap: sharedGradientMap,
+  }), []);
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.position.y = -2 + Math.sin(Date.now() * 0.001) * 0.1;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} material={waterMat}>
+      <planeGeometry args={[300, 300]} />
+    </mesh>
+  );
+}
+
+// ============================================
 // DODGE TRAIL EFFECT
 // ============================================
 function DodgeTrailEffect() {
@@ -413,27 +461,36 @@ function DodgeTrailEffect() {
 }
 
 // ============================================
-// MAIN GAME WORLD
+// PHYSICS LOOP (must be inside Canvas)
 // ============================================
-export function GameWorld() {
-  const initNPCs = useGameStore((s) => s.initNPCs);
-  const npcStates = useGameStore((s) => s.npcStates);
+function PhysicsLoop() {
   const updatePlayerPhysics = useGameStore((s) => s.updatePlayerPhysics);
   const cleanupHitEffects = useGameStore((s) => s.cleanupHitEffects);
 
-  useEffect(() => {
-    if (npcStates.length === 0) initNPCs();
-  }, [initNPCs, npcStates.length]);
-
-  // Physics update loop
   useFrame((_, delta) => {
     updatePlayerPhysics(delta);
     cleanupHitEffects(Date.now());
   });
 
+  return null;
+}
+
+// ============================================
+// MAIN GAME WORLD
+// ============================================
+export function GameWorld() {
+  const initNPCs = useGameStore((s) => s.initNPCs);
+  const npcStates = useGameStore((s) => s.npcStates);
+
+  useEffect(() => {
+    if (npcStates.length === 0) initNPCs();
+  }, [initNPCs, npcStates.length]);
+
   return (
     <Canvas
       shadows
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
       camera={{ fov: 60, near: 0.1, far: 500 }}
       style={{ background: '#0a0015' }}
       onPointerDown={(e) => {
@@ -456,6 +513,7 @@ export function GameWorld() {
       <SceneSetup />
       <Lighting />
       <InputHandler />
+      <PhysicsLoop />
 
       <Sky
         distance={450000}
@@ -481,6 +539,7 @@ export function GameWorld() {
 
       {/* World */}
       <Terrain />
+      <WaterPlane />
       <EnvironmentObjects />
       <Player />
       <NPCs />

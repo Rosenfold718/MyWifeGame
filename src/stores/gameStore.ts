@@ -17,6 +17,7 @@ import {
   NPC_DATA,
   BIOME_ZONES,
   WORLD_SIZE,
+  GRAVITY,
 } from '@/lib/game/constants';
 import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
 import type { SaveData } from '@/lib/game/saveManager';

@@ -1,0 +1,820 @@
+     1→import { create } from 'zustand';
+     2→import type {
+     3→  GameScreen,
+     4→  ElementType,
+     5→  PlayerStats,
+     6→  InventoryItem,
+     7→  Equipment,
+     8→  CharacterAppearance,
+     9→  NPCData,
+    10→  BiomeType,
+    11→} from '@/lib/game/constants';
+    12→import {
+    13→  DEFAULT_STATS,
+    14→  DEFAULT_APPEARANCE,
+    15→  STARTER_WEAPONS,
+    16→  STARTER_ITEMS,
+    17→  NPC_DATA,
+    18→  BIOME_ZONES,
+    19→  WORLD_SIZE,
+    20→} from '@/lib/game/constants';
+    21→import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
+    22→import type { SaveData } from '@/lib/game/saveManager';
+    23→import { createSave, loadSave, getSaves, deleteSave, updateSave, hasAnySave } from '@/lib/game/saveManager';
+    24→
+    25→interface Projectile {
+    26→  id: string;
+    27→  position: [number, number, number];
+    28→  direction: [number, number, number];
+    29→  element: ElementType;
+    30→  speed: number;
+    31→  damage: number;
+    32→  createdAt: number;
+    33→  isPlayerProjectile: boolean;
+    34→}
+    35→
+    36→interface DamageNumber {
+    37→  id: string;
+    38→  position: [number, number, number];
+    39→  value: number;
+    40→  isHeal: boolean;
+    41→  createdAt: number;
+    42→}
+    43→
+    44→interface NPCState extends NPCData {
+    45→  currentHp: number;
+    46→  isAlive: boolean;
+    47→  position: [number, number, number];
+    48→  targetPosition?: [number, number, number];
+    49→  lastAttackTime: number;
+    50→  isAggroed: boolean;
+    51→}
+    52→
+    53→interface HitEffect {
+    54→  id: string;
+    55→  position: [number, number, number];
+    56→  element: ElementType;
+    57→  isCrit: boolean;
+    58→  createdAt: number;
+    59→}
+    60→
+    61→interface GameState {
+    62→  // Screens
+    63→  currentScreen: GameScreen;
+    64→
+    65→  // Player
+    66→  playerName: string;
+    67→  playerPosition: [number, number, number];
+    68→  playerRotation: number;
+    69→  playerTargetRotation: number;
+    70→  playerVelocity: [number, number, number]; // current movement velocity
+    71→  playerVerticalVelocity: number; // for jump/gravity
+    72→  isGrounded: boolean;
+    73→  isSprinting: boolean;
+    74→  stats: PlayerStats;
+    75→  currentElement: ElementType;
+    76→  unlockedElements: ElementType[];
+    77→  inventory: InventoryItem[];
+    78→  equipment: Equipment;
+    79→  appearance: CharacterAppearance;
+    80→
+    81→  // Combat
+    82→  projectiles: Projectile[];
+    83→  damageNumbers: DamageNumber[];
+    84→  hitEffects: HitEffect[];
+    85→  isAttacking: boolean;
+    86→  isCharging: boolean;
+    87→  isDodging: boolean;
+    88→  isCasting: boolean;
+    89→  comboCount: number;
+    90→  lastMeleeTime: number;
+    91→  lastMagicTime: number;
+    92→  lastDodgeTime: number;
+    93→  lastHealTime: number;
+    94→  lastComboTime: number;
+    95→  elementCooldowns: Record<ElementType, number>; // last use timestamp per element
+    96→
+    97→  // NPCs
+    98→  npcStates: NPCState[];
+    99→
+   100→  // World
+   101→  currentBiome: BiomeType;
+   102→  dayTime: number;
+   103→
+   104→  // UI State
+   105→  isInventoryOpen: boolean;
+   106→  isDialogueOpen: boolean;
+   107→  dialogueNpcId: string | null;
+   108→  dialogueLineIndex: number;
+   109→  selectedInventoryItem: string | null;
+   110→
+   111→  // Save
+   112→  currentSaveId: string | null;
+   113→  playTime: number;
+   114→  lastSaveTime: number;
+   115→  hasSaves: boolean;
+   116→
+   117→  // Actions
+   118→  setScreen: (screen: GameScreen) => void;
+   119→  setPlayerName: (name: string) => void;
+   120→  setPlayerPosition: (pos: [number, number, number]) => void;
+   121→  setPlayerRotation: (rot: number) => void;
+   122→  updateStats: (updates: Partial<PlayerStats>) => void;
+   123→  setCurrentElement: (element: ElementType) => void;
+   124→  unlockElement: (element: ElementType) => void;
+   125→  addToInventory: (item: InventoryItem) => void;
+   126→  removeFromInventory: (itemId: string, quantity?: number) => void;
+   127→  useItem: (itemId: string) => void;
+   128→  equipItem: (itemId: string) => void;
+   129→  unequipItem: (slot: keyof Equipment) => void;
+   130→  setAppearance: (updates: Partial<CharacterAppearance>) => void;
+   131→  damagePlayer: (amount: number) => void;
+   132→  healPlayer: (amount: number) => void;
+   133→  useStamina: (amount: number) => void;
+   134→  useMana: (amount: number) => void;
+   135→  regenStats: (delta: number) => void;
+   136→
+   137→  // Combat actions
+   138→  setAttacking: (v: boolean) => void;
+   139→  setCharging: (v: boolean) => void;
+   140→  setDodging: (v: boolean) => void;
+   141→  setCasting: (v: boolean) => void;
+   142→  spawnProjectile: (p: Omit<Projectile, 'id' | 'createdAt'>) => void;
+   143→  updateProjectiles: (now: number) => void;
+   144→  spawnDamageNumber: (p: Omit<DamageNumber, 'id' | 'createdAt'>) => void;
+   145→  cleanupDamageNumbers: (now: number) => void;
+   146→  spawnHitEffect: (p: Omit<HitEffect, 'id' | 'createdAt'>) => void;
+   147→  cleanupHitEffects: (now: number) => void;
+   148→  meleeAttack: () => void;
+   149→  magicAttack: (direction: [number, number, number]) => void;
+   150→  dodge: (direction: [number, number, number]) => void;
+   151→  heal: () => void;
+   152→  setPlayerVelocity: (v: [number, number, number]) => void;
+   153→  setSprinting: (v: boolean) => void;
+   154→  jump: () => void;
+   155→  updatePlayerPhysics: (delta: number) => void;
+   156→
+   157→  // NPC actions
+   158→  initNPCs: () => void;
+   159→  damageNPC: (npcId: string, amount: number) => void;
+   160→  updateNPCs: (playerPos: [number, number, number], now: number) => void;
+   161→  interactWithNPC: (npcId: string) => void;
+   162→  advanceDialogue: () => void;
+   163→  closeDialogue: () => void;
+   164→
+   165→  // World
+   166→  updateBiome: () => void;
+   167→
+   168→  // Save/Load
+   169→  newGame: (name: string) => void;
+   170→  saveGame: () => void;
+   171→  loadGameState: (saveId: string) => void;
+   172→  deleteGameState: (saveId: string) => void;
+   173→  refreshHasSaves: () => void;
+   174→  getSaveList: () => { id: string; name: string; timestamp: number; playTime: number }[];
+   175→  updatePlayTime: (delta: number) => void;
+   176→}
+   177→
+   178→export const useGameStore = create<GameState>((set, get) => ({
+   179→  // Initial state
+   180→  currentScreen: 'menu',
+   181→  playerName: '',
+   182→  playerPosition: [0, 2, 0],
+   183→  playerRotation: 0,
+   184→  playerTargetRotation: 0,
+   185→  stats: { ...DEFAULT_STATS },
+   186→  currentElement: 'fire',
+   187→  unlockedElements: ['fire'],
+   188→  inventory: [...STARTER_WEAPONS, ...STARTER_ITEMS],
+   189→  equipment: { weapon: STARTER_WEAPONS[0], armor: null, accessory: null },
+   190→  appearance: { ...DEFAULT_APPEARANCE },
+   191→  projectiles: [],
+   192→  damageNumbers: [],
+   193→  hitEffects: [],
+   194→  isAttacking: false,
+   195→  isCharging: false,
+   196→  isDodging: false,
+   197→  isCasting: false,
+   198→  comboCount: 0,
+   199→  lastMeleeTime: 0,
+   200→  lastMagicTime: 0,
+   201→  lastDodgeTime: 0,
+   202→  lastHealTime: 0,
+   203→  lastComboTime: 0,
+   204→  elementCooldowns: { fire: 0, ice: 0, lightning: 0, wind: 0, earth: 0 } as Record<ElementType, number>,
+   205→  playerVelocity: [0, 0, 0],
+   206→  playerVerticalVelocity: 0,
+   207→  isGrounded: true,
+   208→  isSprinting: false,
+   209→  npcStates: [],
+   210→  currentBiome: 'forest',
+   211→  dayTime: 0.5,
+   212→  isInventoryOpen: false,
+   213→  isDialogueOpen: false,
+   214→  dialogueNpcId: null,
+   215→  dialogueLineIndex: 0,
+   216→  selectedInventoryItem: null,
+   217→  currentSaveId: null,
+   218→  playTime: 0,
+   219→  lastSaveTime: 0,
+   220→  hasSaves: false,
+   221→
+   222→  // Screen management
+   223→  setScreen: (screen) => set({ currentScreen: screen }),
+   224→
+   225→  // Player
+   226→  setPlayerName: (name) => set({ playerName: name }),
+   227→  setPlayerPosition: (pos) => {
+   228→    set({ playerPosition: pos });
+   229→    get().updateBiome();
+   230→  },
+   231→  setPlayerRotation: (rot) => set({ playerRotation: rot }),
+   232→  updateStats: (updates) =>
+   233→    set((s) => ({ stats: { ...s.stats, ...updates } })),
+   234→
+   235→  setCurrentElement: (element) => set({ currentElement: element }),
+   236→  unlockElement: (element) =>
+   237→    set((s) => ({
+   238→      unlockedElements: s.unlockedElements.includes(element)
+   239→        ? s.unlockedElements
+   240→        : [...s.unlockedElements, element],
+   241→    })),
+   242→
+   243→  // Inventory
+   244→  addToInventory: (item) =>
+   245→    set((s) => {
+   246→      const existing = s.inventory.find((i) => i.id === item.id);
+   247→      if (existing) {
+   248→        return {
+   249→          inventory: s.inventory.map((i) =>
+   250→            i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+   251→          ),
+   252→        };
+   253→      }
+   254→      return { inventory: [...s.inventory, { ...item }] };
+   255→    }),
+   256→
+   257→  removeFromInventory: (itemId, quantity = 1) =>
+   258→    set((s) => ({
+   259→      inventory: s.inventory
+   260→        .map((i) =>
+   261→          i.id === itemId ? { ...i, quantity: i.quantity - quantity } : i
+   262→        )
+   263→        .filter((i) => i.quantity > 0),
+   264→    })),
+   265→
+   266→  useItem: (itemId) => {
+   267→    const item = get().inventory.find((i) => i.id === itemId);
+   268→    if (!item || item.quantity <= 0) return;
+   269→
+   270→    if (item.type === 'potion_hp') {
+   271→      get().healPlayer(50);
+   272→      get().spawnDamageNumber({
+   273→        position: [...get().playerPosition] as [number, number, number],
+   274→        value: 50,
+   275→        isHeal: true,
+   276→      });
+   277→    } else if (item.type === 'potion_mana') {
+   278→      get().updateStats({
+   279→        mana: Math.min(
+   280→          get().stats.maxMana,
+   281→          get().stats.mana + 30
+   282→        ),
+   283→      });
+   284→    } else if (item.type === 'potion_stamina') {
+   285→      get().updateStats({
+   286→        stamina: Math.min(
+   287→          get().stats.maxStamina,
+   288→          get().stats.stamina + 50
+   289→        ),
+   290→      });
+   291→    }
+   292→    get().removeFromInventory(itemId);
+   293→  },
+   294→
+   295→  equipItem: (itemId) => {
+   296→    const item = get().inventory.find((i) => i.id === itemId);
+   297→    if (!item) return;
+   298→
+   299→    let slot: keyof Equipment | null = null;
+   300→    if (item.type === 'weapon') slot = 'weapon';
+   301→    else if (item.type === 'armor') slot = 'armor';
+   302→    else if (item.type === 'accessory') slot = 'accessory';
+   303→    if (!slot) return;
+   304→
+   305→    const current = get().equipment[slot];
+   306→    set((s) => ({
+   307→      equipment: { ...s.equipment, [slot]: item },
+   308→      inventory: [
+   309→        ...s.inventory.filter((i) => i.id !== itemId),
+   310→        ...(current ? [current] : []),
+   311→      ],
+   312→    }));
+   313→
+   314→    // Recalculate stats
+   315→    const eq = get().equipment;
+   316→    const bonus: Partial<PlayerStats> = {};
+   317→    [eq.weapon, eq.armor, eq.accessory].forEach((e) => {
+   318→      if (e?.stats) {
+   319→        Object.entries(e.stats).forEach(([key, val]) => {
+   320→          (bonus as Record<string, number>)[key] =
+   321→            ((bonus as Record<string, number>)[key] || 0) + (val as number);
+   322→        });
+   323→      }
+   324→    });
+   325→    get().updateStats(bonus);
+   326→  },
+   327→
+   328→  unequipItem: (slot) => {
+   329→    const item = get().equipment[slot];
+   330→    if (!item) return;
+   331→    set((s) => ({
+   332→      equipment: { ...s.equipment, [slot]: null },
+   333→      inventory: [...s.inventory, item],
+   334→    }));
+   335→  },
+   336→
+   337→  setAppearance: (updates) =>
+   338→    set((s) => ({ appearance: { ...s.appearance, ...updates } })),
+   339→
+   340→  // Stat management
+   341→  damagePlayer: (amount) => {
+   342→    const { stats } = get();
+   343→    const actualDamage = Math.max(1, amount - stats.armor * 0.3);
+   344→    const newHp = Math.max(0, stats.hp - actualDamage);
+   345→    get().updateStats({ hp: newHp });
+   346→    get().spawnDamageNumber({
+   347→      position: [...get().playerPosition, get().playerPosition[1] + 2] as [number, number, number],
+   348→      value: Math.round(actualDamage),
+   349→      isHeal: false,
+   350→    });
+   351→  },
+   352→
+   353→  healPlayer: (amount) =>
+   354→    set((s) => ({
+   355→      stats: {
+   356→        ...s.stats,
+   357→        hp: Math.min(s.stats.maxHp, s.stats.hp + amount),
+   358→      },
+   359→    })),
+   360→
+   361→  useStamina: (amount) =>
+   362→    set((s) => ({
+   363→      stats: {
+   364→        ...s.stats,
+   365→        stamina: Math.max(0, s.stats.stamina - amount),
+   366→      },
+   367→    })),
+   368→
+   369→  useMana: (amount) =>
+   370→    set((s) => ({
+   371→      stats: {
+   372→        ...s.stats,
+   373→        mana: Math.max(0, s.stats.mana - amount),
+   374→      },
+   375→    })),
+   376→
+   377→  regenStats: (delta) =>
+   378→    set((s) => ({
+   379→      stats: {
+   380→        ...s.stats,
+   381→        stamina: Math.min(s.stats.maxStamina, s.stats.stamina + delta * 8),
+   382→        mana: Math.min(s.stats.maxMana, s.stats.mana + delta * 3),
+   383→        hp: Math.min(s.stats.maxHp, s.stats.hp + delta * 0.5),
+   384→      },
+   385→    })),
+   386→
+   387→  // Combat state
+   388→  setAttacking: (v) => set({ isAttacking: v }),
+   389→  setCharging: (v) => set({ isCharging: v }),
+   390→  setDodging: (v) => set({ isDodging: v }),
+   391→  setCasting: (v) => set({ isCasting: v }),
+   392→
+   393→  spawnProjectile: (p) =>
+   394→    set((s) => ({
+   395→      projectiles: [
+   396→        ...s.projectiles,
+   397→        { ...p, id: `proj_${Date.now()}_${Math.random()}`, createdAt: Date.now() },
+   398→      ],
+   399→    })),
+   400→
+   401→  updateProjectiles: (now) =>
+   402→    set((s) => {
+   403→      const alive: Projectile[] = [];
+   404→      const newDmgNumbers: DamageNumber[] = [];
+   405→
+   406→      for (const proj of s.projectiles) {
+   407→        const age = (now - proj.createdAt) / 1000;
+   408→        if (age > 3) continue;
+   409→
+   410→        const newPos: [number, number, number] = [
+   411→          proj.position[0] + proj.direction[0] * proj.speed * 0.016,
+   412→          proj.position[1] + proj.direction[1] * proj.speed * 0.016,
+   413→          proj.position[2] + proj.direction[2] * proj.speed * 0.016,
+   414→        ];
+   415→
+   416→        // Check collision with NPCs (if player projectile) or player (if NPC projectile)
+   417→        if (proj.isPlayerProjectile) {
+   418→          for (const npc of s.npcStates) {
+   419→            if (!npc.isAlive || !npc.isHostile) continue;
+   420→            const dx = newPos[0] - npc.position[0];
+   421→            const dy = newPos[1] - (npc.position[1] + npc.scale);
+   422→            const dz = newPos[2] - npc.position[2];
+   423→            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+   424→            if (dist < 2) {
+   425→              get().damageNPC(npc.id, proj.damage);
+   426→              newDmgNumbers.push({
+   427→                id: `dmg_${Date.now()}_${Math.random()}`,
+   428→                position: [npc.position[0], npc.position[1] + npc.scale + 1, npc.position[2]],
+   429→                value: proj.damage,
+   430→                isHeal: false,
+   431→                createdAt: now,
+   432→              });
+   433→              continue;
+   434→            }
+   435→          }
+   436→          alive.push({ ...proj, position: newPos });
+   437→        }
+   438→      }
+   439→
+   440→      return {
+   441→        projectiles: alive,
+   442→        damageNumbers: [...s.damageNumbers, ...newDmgNumbers],
+   443→      };
+   444→    }),
+   445→
+   446→  spawnDamageNumber: (p) =>
+   447→    set((s) => ({
+   448→      damageNumbers: [
+   449→        ...s.damageNumbers,
+   450→        { ...p, id: `dmg_${Date.now()}_${Math.random()}`, createdAt: Date.now() },
+   451→      ],
+   452→    })),
+   453→
+   454→  cleanupDamageNumbers: (now) =>
+   455→    set((s) => ({
+   456→      damageNumbers: s.damageNumbers.filter((d) => now - d.createdAt < 1500),
+   457→    })),
+   458→
+   459→  spawnHitEffect: (p) =>
+   460→    set((s) => ({
+   461→      hitEffects: [
+   462→        ...s.hitEffects,
+   463→        { ...p, id: `hit_${Date.now()}_${Math.random()}`, createdAt: Date.now() },
+   464→      ],
+   465→    })),
+   466→
+   467→  cleanupHitEffects: (now) =>
+   468→    set((s) => ({
+   469→      hitEffects: s.hitEffects.filter((h) => now - h.createdAt < 800),
+   470→    })),
+   471→
+   472→  setPlayerVelocity: (v) => set({ playerVelocity: v }),
+   473→  setSprinting: (v) => set({ isSprinting: v }),
+   474→
+   475→  jump: () => {
+   476→    const { isGrounded, playerVerticalVelocity, stats } = get();
+   477→    if (!isGrounded || stats.stamina < 10) return;
+   478→    get().useStamina(10);
+   479→    set({ playerVerticalVelocity: 8, isGrounded: false });
+   480→  },
+   481→
+   482→  updatePlayerPhysics: (delta) =>
+   483→    set((s) => {
+   484→      const vy = s.playerVerticalVelocity + GRAVITY * delta;
+   485→      const newY = s.playerPosition[1] + vy * delta;
+   486→      const groundY = getTerrainHeight(s.playerPosition[0], s.playerPosition[2]) + 0.1;
+   487→      const grounded = newY <= groundY;
+   488→      return {
+   489→        playerVerticalVelocity: grounded ? 0 : vy,
+   490→        playerPosition: [
+   491→          s.playerPosition[0],
+   492→          grounded ? groundY : newY,
+   493→          s.playerPosition[2],
+   494→        ] as [number, number, number],
+   495→        isGrounded: grounded,
+   496→      };
+   497→    }),
+   498→
+   499→  meleeAttack: () => {
+   500→    const now = Date.now();
+   501→    const { lastMeleeTime, lastComboTime, comboCount, stats } = get();
+   502→    
+   503→    // Combo window: 600ms between attacks to continue combo
+   504→    const comboWindow = 600;
+   505→    const newCombo = (now - lastComboTime < comboWindow && comboCount < 3) ? comboCount + 1 : 1;
+   506→    
+   507→    // Combo-specific timings and damage
+   508→    const comboData = [
+   509→      { cooldown: 300, staminaCost: 6, damageMult: 1.0, range: 3.0, attackTime: 250 },  // Quick slash
+   510→      { cooldown: 350, staminaCost: 8, damageMult: 1.2, range: 3.5, attackTime: 300 },  // Heavy slash
+   511→      { cooldown: 500, staminaCost: 15, damageMult: 2.0, range: 4.5, attackTime: 450 },  // Finisher
+   512→    ];
+   513→    const cd = comboData[Math.min(newCombo - 1, 2)];
+   514→    
+   515→    if (now - lastMeleeTime < cd.cooldown) return;
+   516→    if (stats.stamina < cd.staminaCost) return;
+   517→
+   518→    get().useStamina(cd.staminaCost);
+   519→    set({ lastMeleeTime: now, lastComboTime: now, isAttacking: true, comboCount: newCombo });
+   520→    setTimeout(() => get().setAttacking(false), cd.attackTime);
+   521→
+   522→    const pos = get().playerPosition;
+   523→    const rot = get().playerRotation;
+   524→    const attackRange = cd.range;
+   525→    const attackDir: [number, number, number] = [
+   526→      -Math.sin(rot) * attackRange,
+   527→      0,
+   528→      -Math.cos(rot) * attackRange,
+   529→    ];
+   530→
+   531→    // Check NPC hits with wider arc for combo finisher
+   532→    const hitAngle = newCombo === 3 ? 2.5 : 1.5; // radians
+   533→    let hitAny = false;
+   534→    for (const npc of get().npcStates) {
+   535→      if (!npc.isAlive || !npc.isHostile) continue;
+   536→      const dx = npc.position[0] - pos[0];
+   537→      const dz = npc.position[2] - pos[2];
+   538→      const dist = Math.sqrt(dx * dx + dz * dz);
+   539→      if (dist > attackRange + 1) continue;
+   540→      
+   541→      // Check angle
+   542→      const npcAngle = Math.atan2(dx, dz);
+   543→      const playerAngle = -rot;
+   544→      let angleDiff = Math.abs(npcAngle - playerAngle);
+   545→      if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+   546→      if (angleDiff > hitAngle / 2) continue;
+   547→
+   548→      const isCrit = newCombo === 3 && Math.random() < 0.5;
+   549→      const weaponBonus = get().equipment.weapon?.stats?.attack || 0;
+   550→      const baseDamage = stats.attack + weaponBonus;
+   551→      const damage = Math.round(baseDamage * cd.damageMult * (isCrit ? 1.5 : 1));
+   552→      
+   553→      get().damageNPC(npc.id, damage);
+   554→      get().spawnHitEffect({
+   555→        position: [npc.position[0], npc.position[1] + npc.scale * 0.5, npc.position[2]],
+   556→        element: get().currentElement,
+   557→        isCrit,
+   558→      });
+   559→      hitAny = true;
+   560→    }
+   561→
+   562→    // Reset combo after finisher or miss
+   563→    if (newCombo === 3 || !hitAny) {
+   564→      setTimeout(() => set({ comboCount: 0 }), 200);
+   565→    }
+   566→  },
+   567→
+   568→  magicAttack: (direction) => {
+   569→    const now = Date.now();
+   570→    const { lastMagicTime, stats, currentElement, elementCooldowns } = get();
+   571→    const cooldown = 500;
+   572→    const lastUse = elementCooldowns[currentElement] || 0;
+   573→    if (now - lastUse < cooldown) return;
+   574→    if (now - lastMagicTime < 300) return;
+   575→    if (stats.mana < 10) return;
+   576→    if (stats.stamina < 12) return;
+   577→
+   578→    get().useMana(10);
+   579→    get().useStamina(12);
+   580→    set((s) => ({ 
+   581→      lastMagicTime: now, 
+   582→      isCasting: true, 
+   583→      elementCooldowns: { ...s.elementCooldowns, [currentElement]: now } 
+   584→    }));
+   585→    setTimeout(() => get().setCasting(false), 350);
+   586→
+   587→    const pos = get().playerPosition;
+   588→    const damage = stats.magicAttack;
+   589→
+   590→    get().spawnProjectile({
+   591→      position: [pos[0], pos[1] + 1.2, pos[2]],
+   592→      direction: [direction[0], direction[1], direction[2]],
+   593→      element: currentElement,
+   594→      speed: 45,
+   595→      damage,
+   596→      isPlayerProjectile: true,
+   597→    });
+   598→  },
+   599→
+   600→  dodge: (direction) => {
+   601→    const now = Date.now();
+   602→    const { lastDodgeTime, stats } = get();
+   603→    if (now - lastDodgeTime < 500) return;
+   604→    if (stats.stamina < 20) return;
+   605→
+   606→    get().useStamina(20);
+   607→    set({ lastDodgeTime: now, isDodging: true });
+   608→    setTimeout(() => get().setDodging(false), 300);
+   609→
+   610→    const pos = get().playerPosition;
+   611→    const len = Math.sqrt(direction[0] ** 2 + direction[2] ** 2) || 1;
+   612→    const newPos: [number, number, number] = [
+   613→      pos[0] + (direction[0] / len) * 5,
+   614→      pos[1],
+   615→      pos[2] + (direction[2] / len) * 5,
+   616→    ];
+   617→    // Clamp to world
+   618→    const half = WORLD_SIZE / 2;
+   619→    newPos[0] = Math.max(-half, Math.min(half, newPos[0]));
+   620→    newPos[2] = Math.max(-half, Math.min(half, newPos[2]));
+   621→    newPos[1] = getTerrainHeight(newPos[0], newPos[2]) + 0.1;
+   622→    get().setPlayerPosition(newPos);
+   623→  },
+   624→
+   625→  heal: () => {
+   626→    const now = Date.now();
+   627→    const { lastHealTime, stats } = get();
+   628→    if (now - lastHealTime < 2000) return;
+   629→    if (stats.mana < 25) return;
+   630→
+   631→    get().useMana(25);
+   632→    set({ lastHealTime: now });
+   633→    get().healPlayer(30);
+   634→  },
+   635→
+   636→  // NPC Management
+   637→  initNPCs: () =>
+   638→    set(() => {
+   639→      const npcs: NPCState[] = NPC_DATA.map((data) => {
+   640→        const y = getTerrainHeight(data.position[0], data.position[2]);
+   641→        return {
+   642→          ...data,
+   643→          currentHp: data.stats?.maxHp || 999,
+   644→          isAlive: true,
+   645→          position: [data.position[0], y, data.position[2]] as [number, number, number],
+   646→          lastAttackTime: 0,
+   647→          isAggroed: false,
+   648→        };
+   649→      });
+   650→      return { npcStates: npcs };
+   651→    }),
+   652→
+   653→  damageNPC: (npcId, amount) =>
+   654→    set((s) => ({
+   655→      npcStates: s.npcStates.map((npc) =>
+   656→        npc.id === npcId
+   657→          ? { ...npc, currentHp: Math.max(0, npc.currentHp - amount), isAggroed: true, isAlive: npc.currentHp - amount > 0 }
+   658→          : npc
+   659→      ),
+   660→    })),
+   661→
+   662→  updateNPCs: (playerPos, now) =>
+   663→    set((s) => {
+   664→      const updatedNPCs = s.npcStates.map((npc) => {
+   665→        if (!npc.isAlive || !npc.isHostile || !npc.isAggroed) return npc;
+   666→
+   667→        const dx = playerPos[0] - npc.position[0];
+   668→        const dz = playerPos[2] - npc.position[2];
+   669→        const dist = Math.sqrt(dx * dx + dz * dz);
+   670→
+   671→        // Attack if close enough
+   672→        if (dist < 3 && now - npc.lastAttackTime > 1500) {
+   673→          get().damagePlayer(npc.stats?.attack || 10);
+   674→          return { ...npc, lastAttackTime: now };
+   675→        }
+   676→
+   677→        // Move toward player if in aggro range
+   678→        if (dist < 30 && dist > 2) {
+   679→          const speed = (npc.stats?.speed || 3) * 0.016;
+   680→          const len = Math.sqrt(dx * dx + dz * dz);
+   681→          const newX = npc.position[0] + (dx / len) * speed;
+   682→          const newZ = npc.position[2] + (dz / len) * speed;
+   683→          const newY = getTerrainHeight(newX, newZ);
+   684→          return { ...npc, position: [newX, newY, newZ] as [number, number, number] };
+   685→        }
+   686→
+   687→        return npc;
+   688→      });
+   689→      return { npcStates: updatedNPCs };
+   690→    }),
+   691→
+   692→  interactWithNPC: (npcId) => {
+   693→    const npc = get().npcStates.find((n) => n.id === npcId);
+   694→    if (!npc || !npc.isAlive) return;
+   695→    if (npc.isHostile) return;
+   696→
+   697→    set({
+   698→      isDialogueOpen: true,
+   699→      dialogueNpcId: npcId,
+   700→      dialogueLineIndex: 0,
+   701→    });
+   702→  },
+   703→
+   704→  advanceDialogue: () => {
+   705→    const { dialogueNpcId, dialogueLineIndex, npcStates } = get();
+   706→    const npc = npcStates.find((n) => n.id === dialogueNpcId);
+   707→    if (!npc) return;
+   708→
+   709→    if (dialogueLineIndex < npc.dialogue.length - 1) {
+   710→      set({ dialogueLineIndex: dialogueLineIndex + 1 });
+   711→    } else {
+   712→      get().closeDialogue();
+   713→    }
+   714→  },
+   715→
+   716→  closeDialogue: () =>
+   717→    set({ isDialogueOpen: false, dialogueNpcId: null, dialogueLineIndex: 0 }),
+   718→
+   719→  // World
+   720→  updateBiome: () => {
+   721→    const [x, , z] = get().playerPosition;
+   722→    set({ currentBiome: getBiomeAtPosition(x, z) });
+   723→  },
+   724→
+   725→  // Save/Load
+   726→  newGame: (name) => {
+   727→    const saveId = `save_${Date.now()}`;
+   728→    const initialStats = { ...DEFAULT_STATS };
+   729→    const pos: [number, number, number] = [0, getTerrainHeight(0, 0) + 0.1, 0];
+   730→
+   731→    set({
+   732→      playerName: name,
+   733→      playerPosition: pos,
+   734→      playerRotation: 0,
+   735→      stats: initialStats,
+   736→      currentElement: 'fire',
+   737→      unlockedElements: ['fire'],
+   738→      inventory: [...STARTER_WEAPONS, ...STARTER_ITEMS],
+   739→      equipment: { weapon: STARTER_WEAPONS[0], armor: null, accessory: null },
+   740→      appearance: { ...DEFAULT_APPEARANCE },
+   741→      projectiles: [],
+   742→      damageNumbers: [],
+   743→      npcStates: [],
+   744→      currentSaveId: saveId,
+   745→      playTime: 0,
+   746→      lastSaveTime: Date.now(),
+   747→    });
+   748→
+   749→    get().initNPCs();
+   750→    get().saveGame();
+   751→    get().setScreen('playing');
+   752→  },
+   753→
+   754→  saveGame: () => {
+   755→    const state = get();
+   756→    if (!state.currentSaveId) return;
+   757→
+   758→    const data: SaveData = {
+   759→      version: 1,
+   760→      timestamp: Date.now(),
+   761→      playerName: state.playerName,
+   762→      playerPosition: state.playerPosition,
+   763→      playerRotation: state.playerRotation,
+   764→      stats: state.stats,
+   765→      currentElement: state.currentElement,
+   766→      inventory: state.inventory,
+   767→      equipment: state.equipment,
+   768→      appearance: state.appearance,
+   769→      npcsDefeated: state.npcStates
+   770→        .filter((n) => !n.isAlive)
+   771→        .map((n) => n.id),
+   772→      playTime: state.playTime,
+   773→    };
+   774→
+   775→    createSave(state.currentSaveId, data);
+   776→    set({ lastSaveTime: Date.now() });
+   777→  },
+   778→
+   779→  loadGameState: (saveId) => {
+   780→    const data = loadSave(saveId);
+   781→    if (!data) return;
+   782→
+   783→    set({
+   784→      playerName: data.playerName,
+   785→      playerPosition: data.playerPosition,
+   786→      playerRotation: data.playerRotation,
+   787→      stats: data.stats,
+   788→      currentElement: data.currentElement,
+   789→      inventory: data.inventory,
+   790→      equipment: data.equipment,
+   791→      appearance: data.appearance,
+   792→      currentSaveId: saveId,
+   793→      playTime: data.playTime,
+   794→    });
+   795→
+   796→    get().initNPCs();
+   797→
+   798→    // Mark defeated NPCs
+   799→    const defeated = data.npcsDefeated || [];
+   800→    set((s) => ({
+   801→      npcStates: s.npcStates.map((n) =>
+   802→        defeated.includes(n.id) ? { ...n, isAlive: false, currentHp: 0 } : n
+   803→      ),
+   804→    }));
+   805→
+   806→    get().updateBiome();
+   807→    get().setScreen('playing');
+   808→  },
+   809→
+   810→  deleteGameState: (saveId) => {
+   811→    deleteSave(saveId);
+   812→    get().refreshHasSaves();
+   813→  },
+   814→
+   815→  refreshHasSaves: () => set({ hasSaves: hasAnySave() }),
+   816→
+   817→  getSaveList: () => getSaves(),
+   818→
+   819→  updatePlayTime: (delta) => set((s) => ({ playTime: s.playTime + delta })),
+   820→}));

@@ -2,8 +2,126 @@
 
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/stores/gameStore';
-import { Button } from '@/components/ui/button';
-import { Play, Save, Settings, LogOut, RotateCcw } from 'lucide-react';
+
+function PauseButton({
+  children,
+  onClick,
+  variant = 'default',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'default' | 'secondary' | 'danger';
+  delay?: number;
+}) {
+  const styles = {
+    default: {
+      border: 'rgba(199,125,255,0.25)',
+      borderHover: 'rgba(199,125,255,0.5)',
+      glow: 'rgba(199,125,255,0.3)',
+    },
+    secondary: {
+      border: 'rgba(126,184,255,0.2)',
+      borderHover: 'rgba(126,184,255,0.45)',
+      glow: 'rgba(126,184,255,0.25)',
+    },
+    danger: {
+      border: 'rgba(255,80,80,0.2)',
+      borderHover: 'rgba(255,80,80,0.45)',
+      glow: 'rgba(255,80,80,0.25)',
+    },
+  };
+  const s = styles[variant];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -15 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <motion.button
+        onClick={onClick}
+        whileHover={{
+          scale: 1.02,
+          backgroundColor: 'rgba(199,125,255,0.1)',
+        }}
+        whileTap={{ scale: 0.97 }}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: 48,
+          background: 'rgba(10, 0, 21, 0.6)',
+          border: `1px solid ${s.border}`,
+          borderRadius: 2,
+          color: variant === 'danger' ? 'rgba(255,130,130,0.8)' : 'var(--text-primary)',
+          fontFamily: 'var(--font-ui)',
+          fontSize: 14,
+          fontWeight: 500,
+          letterSpacing: '0.1em',
+          cursor: 'pointer',
+          outline: 'none',
+          overflow: 'hidden',
+          transition: 'border-color 0.3s, box-shadow 0.3s',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          el.style.borderColor = s.borderHover;
+          el.style.boxShadow = `0 0 16px ${s.glow}, inset 0 0 16px rgba(0,0,0,0.3)`;
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          el.style.borderColor = s.border;
+          el.style.boxShadow = 'none';
+        }}
+      >
+        {/* Diamond accents */}
+        <div style={{
+          position: 'absolute',
+          left: 10,
+          top: '50%',
+          transform: 'translateY(-50%) rotate(45deg)',
+          width: 5,
+          height: 5,
+          border: `1px solid ${s.border}`,
+          opacity: 0.5,
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute',
+          right: 10,
+          top: '50%',
+          transform: 'translateY(-50%) rotate(45deg)',
+          width: 5,
+          height: 5,
+          border: `1px solid ${s.border}`,
+          opacity: 0.5,
+          pointerEvents: 'none',
+        }} />
+        <span style={{ position: 'relative', zIndex: 2 }}>{children}</span>
+      </motion.button>
+    </motion.div>
+  );
+}
+
+function OrnamentalDivider() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      margin: '2px 0',
+    }}>
+      <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, transparent, rgba(199,125,255,0.15), transparent)' }} />
+      <div style={{
+        width: 5,
+        height: 5,
+        border: '1px solid rgba(199,125,255,0.2)',
+        transform: 'rotate(45deg)',
+      }} />
+      <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, transparent, rgba(199,125,255,0.15), transparent)' }} />
+    </div>
+  );
+}
 
 export function PauseMenu() {
   const setScreen = useGameStore((s) => s.setScreen);
@@ -31,60 +149,89 @@ export function PauseMenu() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        fontFamily: 'var(--font-ui)',
+      }}
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }}
+        initial={{ scale: 0.95, y: 15 }}
         animate={{ scale: 1, y: 0 }}
-        className="w-80 bg-slate-900/95 border border-purple-500/20 rounded-2xl p-6"
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          width: 300,
+          background: 'rgba(10, 0, 21, 0.9)',
+          border: '1px solid rgba(199,125,255,0.15)',
+          borderRadius: 2,
+          padding: '28px 24px 20px',
+          boxShadow: '0 0 60px rgba(199,125,255,0.08)',
+        }}
       >
-        <h2 className="text-white text-2xl font-bold text-center mb-8">Пауза</h2>
-
-        <div className="flex flex-col gap-3">
-          <motion.button
-            whileHover={{ scale: 1.03, x: 5 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={closePause}
-            className="flex items-center gap-3 w-full h-12 px-4 rounded-xl bg-gradient-to-r from-green-600/60 to-green-700/60 hover:from-green-500/80 hover:to-green-600/80 text-white font-medium border border-green-500/20 transition-all cursor-pointer"
-          >
-            <Play className="w-5 h-5" />
-            Продолжить
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.03, x: 5 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleSave}
-            className="flex items-center gap-3 w-full h-12 px-4 rounded-xl bg-gradient-to-r from-blue-600/60 to-blue-700/60 hover:from-blue-500/80 hover:to-blue-600/80 text-white font-medium border border-blue-500/20 transition-all cursor-pointer"
-          >
-            <Save className="w-5 h-5" />
-            Сохранить
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.03, x: 5 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => useGameStore.setState({ isInventoryOpen: true })}
-            className="flex items-center gap-3 w-full h-12 px-4 rounded-xl bg-gradient-to-r from-purple-600/60 to-purple-700/60 hover:from-purple-500/80 hover:to-purple-600/80 text-white font-medium border border-purple-500/20 transition-all cursor-pointer"
-          >
-            <Settings className="w-5 h-5" />
-            Инвентарь
-          </motion.button>
-
-          <div className="border-t border-white/10 my-1" />
-
-          <motion.button
-            whileHover={{ scale: 1.03, x: 5 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleQuit}
-            className="flex items-center gap-3 w-full h-12 px-4 rounded-xl bg-gradient-to-r from-red-600/40 to-red-700/40 hover:from-red-500/60 hover:to-red-600/60 text-red-300 font-medium border border-red-500/20 transition-all cursor-pointer"
-          >
-            <LogOut className="w-5 h-5" />
-            В Главное Меню
-          </motion.button>
+        {/* Title */}
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-title)',
+            fontSize: 28,
+            fontWeight: 900,
+            letterSpacing: '0.15em',
+            color: 'var(--text-primary)',
+            textShadow: '0 0 20px rgba(199,125,255,0.3)',
+          }}>
+            ПАУЗА
+          </h2>
+          {/* Ornamental line */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            marginTop: 8,
+          }}>
+            <div style={{ width: 40, height: 1, background: 'linear-gradient(90deg, transparent, rgba(199,125,255,0.3))' }} />
+            <div style={{
+              width: 6,
+              height: 6,
+              border: '1px solid rgba(255,157,226,0.4)',
+              transform: 'rotate(45deg)',
+            }} />
+            <div style={{ width: 40, height: 1, background: 'linear-gradient(270deg, transparent, rgba(199,125,255,0.3))' }} />
+          </div>
         </div>
 
-        <p className="text-white/20 text-xs text-center mt-6">
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <PauseButton onClick={closePause} delay={0.1}>
+            ▸ Продолжить
+          </PauseButton>
+          <PauseButton onClick={handleSave} variant="secondary" delay={0.15}>
+            ◈ Сохранить
+          </PauseButton>
+          <PauseButton onClick={() => useGameStore.setState({ isInventoryOpen: true })} delay={0.2}>
+            ✦ Инвентарь
+          </PauseButton>
+
+          <OrnamentalDivider />
+
+          <PauseButton onClick={handleQuit} variant="danger" delay={0.25}>
+            ✕ В Главное Меню
+          </PauseButton>
+        </div>
+
+        {/* ESC hint */}
+        <p style={{
+          textAlign: 'center',
+          marginTop: 20,
+          fontSize: 10,
+          color: 'rgba(240,230,255,0.15)',
+          letterSpacing: '0.1em',
+        }}>
           Esc — закрыть паузу
         </p>
       </motion.div>
