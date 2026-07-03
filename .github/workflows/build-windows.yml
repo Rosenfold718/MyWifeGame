@@ -17,16 +17,19 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install Bun
+        run: npm install -g bun
+
       - name: Install dependencies
-        run: npm install
+        run: bun install --no-save
 
       - name: Build Next.js static export
-        run: npx next build
+        run: bun run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
       - name: Build Electron app (Windows)
-        run: npx electron-builder --win --publish never
+        run: bunx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
