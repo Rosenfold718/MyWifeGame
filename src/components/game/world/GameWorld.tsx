@@ -483,7 +483,7 @@ export function GameWorld() {
       dpr={[1, 1.5]}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
       camera={{ fov: 58, near: 0.1, far: 200 }}
-      style={{ background: '#0a0015' }}
+      style={{ width: '100%', height: '100%', background: '#0a0015' }}
       onPointerDown={(e) => {
         if (e.button === 0) {
           useGameStore.getState().meleeAttack();
