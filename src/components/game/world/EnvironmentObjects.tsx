@@ -226,7 +226,7 @@ export function EnvironmentObjects() {
     let seedCounter = 0;
 
     // Forest zone objects
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 50; i++) {
       const angle = seededRandom(seedCounter++) * Math.PI * 2;
       const dist = 10 + seededRandom(seedCounter++) * 110;
       const x = Math.cos(angle) * dist;
@@ -251,7 +251,7 @@ export function EnvironmentObjects() {
     }
 
     // Desert zone objects
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 30; i++) {
       const x = 100 + seededRandom(seedCounter++) * 100;
       const z = -80 + seededRandom(seedCounter++) * 160;
       const biome = getBiomeAtPosition(x, z);
@@ -272,7 +272,7 @@ export function EnvironmentObjects() {
     }
 
     // Tundra zone objects
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 30; i++) {
       const x = -120 + seededRandom(seedCounter++) * 140;
       const z = -200 + seededRandom(seedCounter++) * 100;
       const biome = getBiomeAtPosition(x, z);

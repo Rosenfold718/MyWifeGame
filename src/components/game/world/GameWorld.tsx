@@ -5,14 +5,16 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '@/stores/gameStore';
 import { Terrain } from './Terrain';
-import { EnvironmentObjects } from './EnvironmentObjects';
 import { Player } from '../player/Player';
+import { EnvironmentObjects } from './EnvironmentObjects';
 import { NPCs } from '../npc/NPCs';
 import { Projectiles } from '../combat/Projectiles';
 import { DamageNumbers } from '../combat/DamageNumbers';
 import { BIOME_ZONES } from '@/lib/game/constants';
 import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
 import { Sky } from '@react-three/drei';
+
+
 
 function CameraController() {
   const { camera, gl } = useThree();
@@ -39,7 +41,7 @@ function CameraController() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!isPointerLock.current) return;
+      if (!isPointerLocked.current) return;
 
       yaw.current -= e.movementX * 0.003;
       pitch.current = Math.max(-1.2, Math.min(0.3, pitch.current - e.movementY * 0.003));
@@ -194,7 +196,7 @@ function InputHandler() {
       const newZ = playerPosition[2] + dz;
 
       // World bounds
-      const half = 200;
+      const half = 150;
       const clampedX = Math.max(-half, Math.min(half, newX));
       const clampedZ = Math.max(-half, Math.min(half, newZ));
       const newY = getTerrainHeight(clampedX, clampedZ) + 0.1;

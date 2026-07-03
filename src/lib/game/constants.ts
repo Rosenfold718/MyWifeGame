@@ -9,8 +9,8 @@ export type BiomeType = 'forest' | 'desert' | 'tundra';
 export type NPCType = 'human' | 'animal';
 export type ItemType = 'weapon' | 'armor' | 'accessory' | 'potion_hp' | 'potion_mana' | 'potion_stamina' | 'material';
 
-export const WORLD_SIZE = 400;
-export const TERRAIN_SEGMENTS = 200;
+export const WORLD_SIZE = 300;
+export const TERRAIN_SEGMENTS = 80;
 export const TERRAIN_HEIGHT_SCALE = 30;
 export const GRAVITY = -25;
 
