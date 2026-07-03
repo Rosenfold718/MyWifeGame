@@ -14,24 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  title: "Эфирная Сага — Aetherial Saga",
+  description: "3D RPG game built with Next.js, React Three Fiber, and TypeScript. Explore enchanted forests, crystal deserts, and frozen tundras.",
+  keywords: ["game", "RPG", "3D", "Next.js", "React Three Fiber", "TypeScript", "Aetherial Saga"],
+  authors: [{ name: "Rosenfold718" }],
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "Эфирная Сага — Aetherial Saga",
+    description: "3D RPG game — explore, fight, and discover magic!",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
   },
 };
 
