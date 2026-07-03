@@ -10,6 +10,7 @@ import { GameHUD } from './ui/GameHUD';
 import { DialogueBox } from './ui/DialogueBox';
 import { Inventory } from './ui/Inventory';
 import { PauseMenu } from './ui/PauseMenu';
+import { ScreenShake, ScreenEffects } from './effects/ScreenEffects';
 
 export function GameApp() {
   const currentScreen = useGameStore((s) => s.currentScreen);
@@ -87,19 +88,20 @@ export function GameApp() {
       {currentScreen === 'saveload' && <SaveLoadMenu />}
 
       {currentScreen === 'playing' && (
-        <>
+        <ScreenShake>
           <GameWorld />
+          <ScreenEffects />
           <GameHUD />
           {isDialogueOpen && <DialogueBox />}
           {isInventoryOpen && <Inventory />}
-        </>
+        </ScreenShake>
       )}
 
       {currentScreen === 'paused' && (
-        <>
+        <ScreenShake>
           <GameWorld />
           <PauseMenu />
-        </>
+        </ScreenShake>
       )}
     </div>
   );

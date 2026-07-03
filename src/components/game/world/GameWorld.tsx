@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect, useState, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '@/stores/gameStore';
@@ -10,48 +10,49 @@ import { EnvironmentObjects } from './EnvironmentObjects';
 import { NPCs } from '../npc/NPCs';
 import { Projectiles } from '../combat/Projectiles';
 import { DamageNumbers } from '../combat/DamageNumbers';
+import { SpellTrail, HitExplosion, DodgeTrail, HealEffect, ElementAura } from '../effects/ParticleEffects';
 import { BIOME_ZONES } from '@/lib/game/constants';
 import { getTerrainHeight, getBiomeAtPosition } from '@/lib/game/noise';
 import { Sky } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 
-
-
+// ============================================
+// AAA CAMERA CONTROLLER
+// Smooth spring-based follow, collision-aware
+// ============================================
 function CameraController() {
   const { camera, gl } = useThree();
   const yaw = useRef(0);
-  const pitch = useRef(-0.4);
+  const pitch = useRef(-0.35);
   const distance = useRef(8);
-  const targetPos = useRef(new THREE.Vector3());
+  const targetDistance = useRef(8);
   const currentPos = useRef(new THREE.Vector3(0, 5, 10));
+  const currentLookAt = useRef(new THREE.Vector3());
   const isPointerLocked = useRef(false);
+  const velocity = useRef(new THREE.Vector3());
   const playerPosition = useGameStore((s) => s.playerPosition);
   const isDodging = useGameStore((s) => s.isDodging);
+  const isSprinting = useGameStore((s) => s.isSprinting);
+  const comboCount = useGameStore((s) => s.comboCount);
 
   useEffect(() => {
     const canvas = gl.domElement;
 
     const onClick = () => {
-      if (!isPointerLocked.current) {
-        canvas.requestPointerLock();
-      }
+      if (!isPointerLocked.current) canvas.requestPointerLock();
     };
-
     const onPointerLockChange = () => {
       isPointerLocked.current = document.pointerLockElement === canvas;
     };
-
     const onMouseMove = (e: MouseEvent) => {
       if (!isPointerLocked.current) return;
-
-      yaw.current -= e.movementX * 0.003;
-      pitch.current = Math.max(-1.2, Math.min(0.3, pitch.current - e.movementY * 0.003));
-
-      // Update player rotation to face camera direction
+      const sens = 0.002;
+      yaw.current -= e.movementX * sens;
+      pitch.current = Math.max(-1.2, Math.min(0.5, pitch.current - e.movementY * sens));
       useGameStore.getState().setPlayerRotation(yaw.current);
     };
-
     const onWheel = (e: WheelEvent) => {
-      distance.current = Math.max(3, Math.min(20, distance.current + e.deltaY * 0.01));
+      targetDistance.current = Math.max(3, Math.min(18, targetDistance.current + e.deltaY * 0.008));
     };
 
     canvas.addEventListener('click', onClick);
@@ -67,53 +68,94 @@ function CameraController() {
     };
   }, [gl]);
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
+    const dt = Math.min(delta, 0.05);
+
     const px = playerPosition[0];
     const py = playerPosition[1];
     const pz = playerPosition[2];
 
-    targetPos.current.set(
-      px + Math.sin(yaw.current) * Math.cos(pitch.current) * distance.current,
-      py + 2 + Math.sin(pitch.current) * distance.current,
-      pz + Math.cos(yaw.current) * Math.cos(pitch.current) * distance.current
+    // Combo camera shake
+    const shakeIntensity = comboCount === 3 ? 0.03 : 0;
+
+    // Distance lerp
+    const targetDist = isDodging ? 6 : isSprinting ? 10 : targetDistance.current;
+    distance.current += (targetDist - distance.current) * 3 * dt;
+
+    // Desired camera position
+    const camOffsetX = Math.sin(yaw.current) * Math.cos(pitch.current) * distance.current;
+    const camOffsetY = Math.sin(pitch.current) * distance.current;
+    const camOffsetZ = Math.cos(yaw.current) * Math.cos(pitch.current) * distance.current;
+
+    const desiredPos = new THREE.Vector3(
+      px + camOffsetX,
+      py + 2 + camOffsetY,
+      pz + camOffsetZ
     );
 
-    const lerpSpeed = isDodging ? 0.3 : 0.08;
-    currentPos.current.lerp(targetPos.current, lerpSpeed);
+    // Add shake
+    if (shakeIntensity > 0) {
+      desiredPos.x += (Math.random() - 0.5) * shakeIntensity;
+      desiredPos.y += (Math.random() - 0.5) * shakeIntensity;
+    }
+
+    // Spring physics for smooth follow
+    const stiffness = isDodging ? 25 : 12;
+    const damping = isDodging ? 0.7 : 0.85;
+    const springForce = new THREE.Vector3().subVectors(desiredPos, currentPos.current).multiplyScalar(stiffness);
+    velocity.current.multiplyScalar(damping).add(springForce.multiplyScalar(dt));
+    currentPos.current.add(velocity.current.clone().multiplyScalar(dt));
+
+    // Ground clamp (don't go below terrain + 1)
+    const groundY = getTerrainHeight(currentPos.current.x, currentPos.current.z) + 1;
+    if (currentPos.current.y < groundY) {
+      currentPos.current.y = groundY;
+      velocity.current.y = 0;
+    }
+
+    // Smooth look-at
+    const desiredLook = new THREE.Vector3(px, py + 1.2, pz);
+    currentLookAt.current.lerp(desiredLook, isDodging ? 0.4 : 0.15);
 
     camera.position.copy(currentPos.current);
-    camera.lookAt(px, py + 1.2, pz);
+    camera.lookAt(currentLookAt.current);
+
+    // FOV change for sprint
+    const targetFov = isSprinting ? 70 : 60;
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.fov += (targetFov - cam.fov) * 3 * dt;
+    cam.updateProjectionMatrix();
   });
 
   return null;
 }
 
+// ============================================
+// AAA SCENE SETUP (fog + atmosphere)
+// ============================================
 function SceneSetup() {
-  const currentBiome = useGameStore((s) => s.currentBiome);
-
   useFrame(({ scene }) => {
     if (!scene.fog) {
-      scene.fog = new THREE.FogExp2(0x1a0a2e, 0.004);
+      scene.fog = new THREE.FogExp2(0x1a0a2e, 0.003);
     }
-
     const biome = useGameStore.getState().currentBiome;
     const targetColor = new THREE.Color(
       biome === 'forest' ? 0x1a3a15 :
       biome === 'desert' ? 0xc49427 :
       0xa8c0d0
     );
-
     if (scene.fog instanceof THREE.FogExp2) {
       scene.fog.color.lerp(targetColor, 0.02);
     }
   });
-
   return null;
 }
 
+// ============================================
+// DYNAMIC LIGHTING
+// ============================================
 function Lighting() {
   const lightRef = useRef<THREE.DirectionalLight>(null);
-  const currentBiome = useGameStore((s) => s.currentBiome);
 
   useFrame(() => {
     if (!lightRef.current) return;
@@ -144,27 +186,25 @@ function Lighting() {
         shadow-camera-top={100}
         shadow-camera-bottom={-100}
       />
-      <hemisphereLight
-        groundColor="#443344"
-        skyColor="#8888cc"
-        intensity={0.3}
-      />
+      <hemisphereLight groundColor="#443344" skyColor="#8888cc" intensity={0.3} />
     </>
   );
 }
 
+// ============================================
+// AAA INPUT HANDLER
+// Camera-relative movement with smooth acceleration
+// ============================================
 function InputHandler() {
   const keys = useRef<Set<string>>(new Set());
+  const moveDir = useRef(new THREE.Vector3());
+  const currentSpeed = useRef(0);
   const playerPosition = useGameStore((s) => s.playerPosition);
   const stats = useGameStore((s) => s.stats);
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      keys.current.add(e.code);
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      keys.current.delete(e.code);
-    };
+    const onKeyDown = (e: KeyboardEvent) => keys.current.add(e.code);
+    const onKeyUp = (e: KeyboardEvent) => keys.current.delete(e.code);
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     return () => {
@@ -173,25 +213,66 @@ function InputHandler() {
     };
   }, []);
 
-  useFrame(() => {
-    if (useGameStore.getState().currentScreen !== 'playing') return;
-    if (useGameStore.getState().isDialogueOpen) return;
-    if (useGameStore.getState().isInventoryOpen) return;
+  useFrame((_, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.05);
+    const store = useGameStore.getState();
+    if (store.currentScreen !== 'playing') return;
+    if (store.isDialogueOpen || store.isInventoryOpen) return;
+    if (store.isDodging) return;
 
-    const moveSpeed = stats.speed * 0.016;
-    const rot = useGameStore.getState().playerRotation;
-    let dx = 0, dz = 0;
+    const k = keys.current;
+    const rot = store.playerRotation;
 
-    if (keys.current.has('KeyW') || keys.current.has('ArrowUp')) { dx -= Math.sin(rot); dz -= Math.cos(rot); }
-    if (keys.current.has('KeyS') || keys.current.has('ArrowDown')) { dx += Math.sin(rot); dz += Math.cos(rot); }
-    if (keys.current.has('KeyA') || keys.current.has('ArrowLeft')) { dx -= Math.cos(rot); dz += Math.sin(rot); }
-    if (keys.current.has('KeyD') || keys.current.has('ArrowRight')) { dx += Math.cos(rot); dz -= Math.sin(rot); }
+    // Camera-relative input direction
+    let inputX = 0;
+    let inputZ = 0;
+    if (k.has('KeyW') || k.has('ArrowUp')) inputZ -= 1;
+    if (k.has('KeyS') || k.has('ArrowDown')) inputZ += 1;
+    if (k.has('KeyA') || k.has('ArrowLeft')) inputX -= 1;
+    if (k.has('KeyD') || k.has('ArrowRight')) inputX += 1;
 
-    if (dx !== 0 || dz !== 0) {
-      const len = Math.sqrt(dx * dx + dz * dz);
-      dx = (dx / len) * moveSpeed;
-      dz = (dz / len) * moveSpeed;
+    // Rotate input by camera yaw (camera-relative movement)
+    const sinR = Math.sin(rot);
+    const cosR = Math.cos(rot);
+    const worldX = inputX * cosR + inputZ * sinR;
+    const worldZ = -inputX * sinR + inputZ * cosR;
 
+    const hasInput = worldX !== 0 || worldZ !== 0;
+
+    // Normalize
+    const inputLen = Math.sqrt(worldX * worldX + worldZ * worldZ) || 1;
+    const normX = hasInput ? worldX / inputLen : 0;
+    const normZ = hasInput ? worldZ / inputLen : 0;
+
+    // Sprint
+    const wantSprint = k.has('ShiftLeft') && hasInput;
+    store.setSprinting(wantSprint);
+
+    // Target speed with smooth acceleration/deceleration
+    const baseSpeed = stats.speed;
+    const maxSpeed = wantSprint ? baseSpeed * 1.6 : baseSpeed;
+    const accel = hasInput ? (wantSprint ? 30 : 22) : 25; // deceleration is faster
+    const targetSpeed = hasInput ? maxSpeed : 0;
+
+    // Smooth speed interpolation
+    if (hasInput) {
+      currentSpeed.current = Math.min(currentSpeed.current + accel * delta, targetSpeed);
+    } else {
+      currentSpeed.current = Math.max(currentSpeed.current - accel * 1.5 * delta, 0);
+    }
+
+    // Stamina drain for sprinting
+    if (wantSprint && currentSpeed.current > baseSpeed) {
+      store.useStamina(15 * delta);
+      if (store.stats.stamina <= 0) {
+        store.setSprinting(false);
+      }
+    }
+
+    // Apply movement
+    if (currentSpeed.current > 0.1) {
+      const dx = normX * currentSpeed.current * delta;
+      const dz = normZ * currentSpeed.current * delta;
       const newX = playerPosition[0] + dx;
       const newZ = playerPosition[2] + dz;
 
@@ -199,73 +280,156 @@ function InputHandler() {
       const half = 150;
       const clampedX = Math.max(-half, Math.min(half, newX));
       const clampedZ = Math.max(-half, Math.min(half, newZ));
-      const newY = getTerrainHeight(clampedX, clampedZ) + 0.1;
+      const groundY = getTerrainHeight(clampedX, clampedZ) + 0.1;
 
-      useGameStore.getState().setPlayerPosition([clampedX, newY, clampedZ]);
+      store.setPlayerPosition([clampedX, groundY, clampedZ]);
+
+      // Auto-rotate player to face movement direction
+      if (hasInput) {
+        const targetRot = Math.atan2(-normX, -normZ);
+        store.setPlayerRotation(targetRot);
+      }
     }
-
-    // Sprint
-    if (keys.current.has('ShiftLeft') && (dx !== 0 || dz !== 0)) {
-      useGameStore.getState().useStamina(0.3);
-    }
-
-    // Melee attack on click
-    // Handled in Player component
 
     // Element switching (1-5)
     const elements = ['fire', 'ice', 'lightning', 'wind', 'earth'] as const;
     for (let i = 0; i < 5; i++) {
-      if (keys.current.has(`Digit${i + 1}`)) {
-        useGameStore.getState().setCurrentElement(elements[i]);
+      if (k.has(`Digit${i + 1}`)) {
+        const el = elements[i];
+        if (store.unlockedElements.includes(el)) {
+          store.setCurrentElement(el);
+          k.delete(`Digit${i + 1}`); // prevent repeat
+        }
       }
     }
 
     // Interact with NPC (E)
-    if (keys.current.has('KeyE') && !useGameStore.getState().isDialogueOpen) {
-      keys.current.delete('KeyE');
-      const pos = useGameStore.getState().playerPosition;
-      const npcs = useGameStore.getState().npcStates;
-      for (const npc of npcs) {
+    if (k.has('KeyE') && !store.isDialogueOpen) {
+      k.delete('KeyE');
+      const pos = store.playerPosition;
+      for (const npc of store.npcStates) {
         if (!npc.isAlive || npc.isHostile) continue;
         const ndx = pos[0] - npc.position[0];
         const ndz = pos[2] - npc.position[2];
-        const dist = Math.sqrt(ndx * ndx + ndz * ndz);
-        if (dist < 5) {
-          useGameStore.getState().interactWithNPC(npc.id);
+        if (Math.sqrt(ndx * ndx + ndz * ndz) < 5) {
+          store.interactWithNPC(npc.id);
           break;
         }
       }
     }
 
-    // Space = dodge
-    if (keys.current.has('Space')) {
-      keys.current.delete('Space');
-      if (dx !== 0 || dz !== 0) {
-        useGameStore.getState().dodge([dx, 0, dz]);
-      } else {
-        useGameStore.getState().dodge([0, 0, -1]);
+    // Space = jump / dodge
+    if (k.has('Space')) {
+      k.delete('Space');
+      if (store.isGrounded && currentSpeed.current > 1) {
+        // Dodge
+        store.dodge([normX, 0, normZ]);
+      } else if (store.isGrounded) {
+        store.jump();
       }
     }
 
     // Q = heal
-    if (keys.current.has('KeyQ')) {
-      keys.current.delete('KeyQ');
-      useGameStore.getState().heal();
+    if (k.has('KeyQ')) {
+      k.delete('KeyQ');
+      store.heal();
     }
   });
 
   return null;
 }
 
+// ============================================
+// HIT EFFECTS RENDERER
+// ============================================
+function HitEffectsRenderer() {
+  const hitEffects = useGameStore((s) => s.hitEffects);
+
+  return (
+    <group>
+      {hitEffects.map((effect) => (
+        <HitExplosion
+          key={effect.id}
+          position={effect.position}
+          element={effect.element}
+          isCrit={effect.isCrit}
+          size={effect.isCrit ? 2 : 1}
+        />
+      ))}
+    </group>
+  );
+}
+
+// ============================================
+// PLAYER EFFECTS (aura + heal)
+// ============================================
+function PlayerEffects() {
+  const playerPosition = useGameStore((s) => s.playerPosition);
+  const currentElement = useGameStore((s) => s.currentElement);
+  const lastHealTime = useGameStore((s) => s.lastHealTime);
+  const [showHeal, setShowHeal] = useState(false);
+  const healTimer = useRef(0);
+
+  useEffect(() => {
+    if (lastHealTime > healTimer.current) {
+      healTimer.current = lastHealTime;
+      setShowHeal(true);
+      const t = setTimeout(() => setShowHeal(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [lastHealTime]);
+
+  return (
+    <group>
+      <ElementAura position={playerPosition} element={currentElement} />
+      {showHeal && <HealEffect position={playerPosition} />}
+    </group>
+  );
+}
+
+// ============================================
+// DODGE TRAIL EFFECT
+// ============================================
+function DodgeTrailEffect() {
+  const playerPosition = useGameStore((s) => s.playerPosition);
+  const currentElement = useGameStore((s) => s.currentElement);
+  const isDodging = useGameStore((s) => s.isDodging);
+  const [triggerKey, setTriggerKey] = useState(0);
+  const wasDodging = useRef(false);
+
+  useEffect(() => {
+    if (isDodging && !wasDodging.current) {
+      wasDodging.current = true;
+      setTriggerKey((k) => k + 1);
+    }
+    if (!isDodging) wasDodging.current = false;
+  }, [isDodging]);
+
+  return (
+    <group>
+      {triggerKey > 0 && <DodgeTrail key={triggerKey} position={[...playerPosition]} element={currentElement} />}
+    </group>
+  );
+}
+
+// ============================================
+// MAIN GAME WORLD
+// ============================================
 export function GameWorld() {
   const initNPCs = useGameStore((s) => s.initNPCs);
   const npcStates = useGameStore((s) => s.npcStates);
+  const updatePlayerPhysics = useGameStore((s) => s.updatePlayerPhysics);
+  const cleanupHitEffects = useGameStore((s) => s.cleanupHitEffects);
 
   useEffect(() => {
-    if (npcStates.length === 0) {
-      initNPCs();
-    }
+    if (npcStates.length === 0) initNPCs();
   }, [initNPCs, npcStates.length]);
+
+  // Physics update loop
+  useFrame((_, delta) => {
+    updatePlayerPhysics(delta);
+    cleanupHitEffects(Date.now());
+  });
 
   return (
     <Canvas
@@ -278,7 +442,6 @@ export function GameWorld() {
         }
         if (e.button === 2) {
           e.preventDefault();
-          // Right click = magic attack in look direction
           const rot = useGameStore.getState().playerRotation;
           useGameStore.getState().magicAttack([
             -Math.sin(rot),
@@ -305,12 +468,31 @@ export function GameWorld() {
         mieDirectionalG={0.8}
       />
 
+      {/* Post-processing */}
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.6}
+          luminanceSmoothing={0.4}
+          intensity={0.8}
+          mipmapBlur
+        />
+        <Vignette eskil={false} offset={0.3} darkness={0.5} />
+      </EffectComposer>
+
+      {/* World */}
       <Terrain />
       <EnvironmentObjects />
       <Player />
       <NPCs />
+
+      {/* Combat */}
       <Projectiles />
       <DamageNumbers />
+      <HitEffectsRenderer />
+
+      {/* Player VFX */}
+      <PlayerEffects />
+      <DodgeTrailEffect />
     </Canvas>
   );
 }

@@ -50,6 +50,14 @@ interface NPCState extends NPCData {
   isAggroed: boolean;
 }
 
+interface HitEffect {
+  id: string;
+  position: [number, number, number];
+  element: ElementType;
+  isCrit: boolean;
+  createdAt: number;
+}
+
 interface GameState {
   // Screens
   currentScreen: GameScreen;
@@ -59,6 +67,10 @@ interface GameState {
   playerPosition: [number, number, number];
   playerRotation: number;
   playerTargetRotation: number;
+  playerVelocity: [number, number, number]; // current movement velocity
+  playerVerticalVelocity: number; // for jump/gravity
+  isGrounded: boolean;
+  isSprinting: boolean;
   stats: PlayerStats;
   currentElement: ElementType;
   unlockedElements: ElementType[];
@@ -69,14 +81,18 @@ interface GameState {
   // Combat
   projectiles: Projectile[];
   damageNumbers: DamageNumber[];
+  hitEffects: HitEffect[];
   isAttacking: boolean;
   isCharging: boolean;
   isDodging: boolean;
   isCasting: boolean;
+  comboCount: number;
   lastMeleeTime: number;
   lastMagicTime: number;
   lastDodgeTime: number;
   lastHealTime: number;
+  lastComboTime: number;
+  elementCooldowns: Record<ElementType, number>; // last use timestamp per element
 
   // NPCs
   npcStates: NPCState[];
@@ -127,10 +143,16 @@ interface GameState {
   updateProjectiles: (now: number) => void;
   spawnDamageNumber: (p: Omit<DamageNumber, 'id' | 'createdAt'>) => void;
   cleanupDamageNumbers: (now: number) => void;
+  spawnHitEffect: (p: Omit<HitEffect, 'id' | 'createdAt'>) => void;
+  cleanupHitEffects: (now: number) => void;
   meleeAttack: () => void;
   magicAttack: (direction: [number, number, number]) => void;
   dodge: (direction: [number, number, number]) => void;
   heal: () => void;
+  setPlayerVelocity: (v: [number, number, number]) => void;
+  setSprinting: (v: boolean) => void;
+  jump: () => void;
+  updatePlayerPhysics: (delta: number) => void;
 
   // NPC actions
   initNPCs: () => void;
@@ -168,14 +190,22 @@ export const useGameStore = create<GameState>((set, get) => ({
   appearance: { ...DEFAULT_APPEARANCE },
   projectiles: [],
   damageNumbers: [],
+  hitEffects: [],
   isAttacking: false,
   isCharging: false,
   isDodging: false,
   isCasting: false,
+  comboCount: 0,
   lastMeleeTime: 0,
   lastMagicTime: 0,
   lastDodgeTime: 0,
   lastHealTime: 0,
+  lastComboTime: 0,
+  elementCooldowns: { fire: 0, ice: 0, lightning: 0, wind: 0, earth: 0 } as Record<ElementType, number>,
+  playerVelocity: [0, 0, 0],
+  playerVerticalVelocity: 0,
+  isGrounded: true,
+  isSprinting: false,
   npcStates: [],
   currentBiome: 'forest',
   dayTime: 0.5,
@@ -426,59 +456,142 @@ export const useGameStore = create<GameState>((set, get) => ({
       damageNumbers: s.damageNumbers.filter((d) => now - d.createdAt < 1500),
     })),
 
+  spawnHitEffect: (p) =>
+    set((s) => ({
+      hitEffects: [
+        ...s.hitEffects,
+        { ...p, id: `hit_${Date.now()}_${Math.random()}`, createdAt: Date.now() },
+      ],
+    })),
+
+  cleanupHitEffects: (now) =>
+    set((s) => ({
+      hitEffects: s.hitEffects.filter((h) => now - h.createdAt < 800),
+    })),
+
+  setPlayerVelocity: (v) => set({ playerVelocity: v }),
+  setSprinting: (v) => set({ isSprinting: v }),
+
+  jump: () => {
+    const { isGrounded, playerVerticalVelocity, stats } = get();
+    if (!isGrounded || stats.stamina < 10) return;
+    get().useStamina(10);
+    set({ playerVerticalVelocity: 8, isGrounded: false });
+  },
+
+  updatePlayerPhysics: (delta) =>
+    set((s) => {
+      const vy = s.playerVerticalVelocity + GRAVITY * delta;
+      const newY = s.playerPosition[1] + vy * delta;
+      const groundY = getTerrainHeight(s.playerPosition[0], s.playerPosition[2]) + 0.1;
+      const grounded = newY <= groundY;
+      return {
+        playerVerticalVelocity: grounded ? 0 : vy,
+        playerPosition: [
+          s.playerPosition[0],
+          grounded ? groundY : newY,
+          s.playerPosition[2],
+        ] as [number, number, number],
+        isGrounded: grounded,
+      };
+    }),
+
   meleeAttack: () => {
     const now = Date.now();
-    const { lastMeleeTime, stats } = get();
-    if (now - lastMeleeTime < 400) return;
-    if (stats.stamina < 8) return;
+    const { lastMeleeTime, lastComboTime, comboCount, stats } = get();
+    
+    // Combo window: 600ms between attacks to continue combo
+    const comboWindow = 600;
+    const newCombo = (now - lastComboTime < comboWindow && comboCount < 3) ? comboCount + 1 : 1;
+    
+    // Combo-specific timings and damage
+    const comboData = [
+      { cooldown: 300, staminaCost: 6, damageMult: 1.0, range: 3.0, attackTime: 250 },  // Quick slash
+      { cooldown: 350, staminaCost: 8, damageMult: 1.2, range: 3.5, attackTime: 300 },  // Heavy slash
+      { cooldown: 500, staminaCost: 15, damageMult: 2.0, range: 4.5, attackTime: 450 },  // Finisher
+    ];
+    const cd = comboData[Math.min(newCombo - 1, 2)];
+    
+    if (now - lastMeleeTime < cd.cooldown) return;
+    if (stats.stamina < cd.staminaCost) return;
 
-    get().useStamina(8);
-    set({ lastMeleeTime: now, isAttacking: true });
-    setTimeout(() => get().setAttacking(false), 300);
+    get().useStamina(cd.staminaCost);
+    set({ lastMeleeTime: now, lastComboTime: now, isAttacking: true, comboCount: newCombo });
+    setTimeout(() => get().setAttacking(false), cd.attackTime);
 
     const pos = get().playerPosition;
     const rot = get().playerRotation;
-    const attackRange = 3.5;
+    const attackRange = cd.range;
     const attackDir: [number, number, number] = [
       -Math.sin(rot) * attackRange,
       0,
       -Math.cos(rot) * attackRange,
     ];
 
-    // Check NPC hits
+    // Check NPC hits with wider arc for combo finisher
+    const hitAngle = newCombo === 3 ? 2.5 : 1.5; // radians
+    let hitAny = false;
     for (const npc of get().npcStates) {
       if (!npc.isAlive || !npc.isHostile) continue;
-      const dx = (pos[0] + attackDir[0]) - npc.position[0];
-      const dz = (pos[2] + attackDir[2]) - npc.position[2];
+      const dx = npc.position[0] - pos[0];
+      const dz = npc.position[2] - pos[2];
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < 2.5) {
-        const damage = stats.attack + (stats.equipment?.weapon?.stats?.attack || 0);
-        get().damageNPC(npc.id, damage);
-      }
+      if (dist > attackRange + 1) continue;
+      
+      // Check angle
+      const npcAngle = Math.atan2(dx, dz);
+      const playerAngle = -rot;
+      let angleDiff = Math.abs(npcAngle - playerAngle);
+      if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+      if (angleDiff > hitAngle / 2) continue;
+
+      const isCrit = newCombo === 3 && Math.random() < 0.5;
+      const weaponBonus = get().equipment.weapon?.stats?.attack || 0;
+      const baseDamage = stats.attack + weaponBonus;
+      const damage = Math.round(baseDamage * cd.damageMult * (isCrit ? 1.5 : 1));
+      
+      get().damageNPC(npc.id, damage);
+      get().spawnHitEffect({
+        position: [npc.position[0], npc.position[1] + npc.scale * 0.5, npc.position[2]],
+        element: get().currentElement,
+        isCrit,
+      });
+      hitAny = true;
+    }
+
+    // Reset combo after finisher or miss
+    if (newCombo === 3 || !hitAny) {
+      setTimeout(() => set({ comboCount: 0 }), 200);
     }
   },
 
   magicAttack: (direction) => {
     const now = Date.now();
-    const { lastMagicTime, stats, currentElement } = get();
-    if (now - lastMagicTime < 600) return;
+    const { lastMagicTime, stats, currentElement, elementCooldowns } = get();
+    const cooldown = 500;
+    const lastUse = elementCooldowns[currentElement] || 0;
+    if (now - lastUse < cooldown) return;
+    if (now - lastMagicTime < 300) return;
     if (stats.mana < 10) return;
-    if (stats.stamina < 15) return;
+    if (stats.stamina < 12) return;
 
     get().useMana(10);
-    get().useStamina(15);
-    set({ lastMagicTime: now, isCasting: true });
-    setTimeout(() => get().setCasting(false), 400);
+    get().useStamina(12);
+    set((s) => ({ 
+      lastMagicTime: now, 
+      isCasting: true, 
+      elementCooldowns: { ...s.elementCooldowns, [currentElement]: now } 
+    }));
+    setTimeout(() => get().setCasting(false), 350);
 
     const pos = get().playerPosition;
-    const speed = 40;
     const damage = stats.magicAttack;
 
     get().spawnProjectile({
       position: [pos[0], pos[1] + 1.2, pos[2]],
       direction: [direction[0], direction[1], direction[2]],
       element: currentElement,
-      speed,
+      speed: 45,
       damage,
       isPlayerProjectile: true,
     });
